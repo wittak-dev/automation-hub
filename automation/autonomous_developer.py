@@ -96,17 +96,24 @@ class AutonomousDeveloper:
             
             # Step 8: Apply changes
             changes_applied = self._apply_changes(repo_path, solution['changes'])
-            
+
             if not changes_applied:
                 shutil.rmtree(repo_path)
                 return {
                     "status": "changes_failed",
                     "tasks_completed": 0
                 }
-            
-            # Step 9: Run tests
-            test_results = self._run_tests(repo_path, project)
-            
+
+            # Step 9: Run tests (skip for documentation-only issues)
+            issue_labels = [label.name.lower() for label in selected_issue.labels]
+            skip_tests = 'documentation' in issue_labels or 'docs' in issue_labels
+
+            if skip_tests:
+                print(f"📝 Skipping tests for documentation-only issue")
+                test_results = {'passed': True, 'output': 'Tests skipped for documentation'}
+            else:
+                test_results = self._run_tests(repo_path, project)
+
             if not test_results['passed']:
                 print(f"⚠️  Tests failed, skipping PR creation")
                 shutil.rmtree(repo_path)

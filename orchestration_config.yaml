@@ -1,0 +1,43 @@
+# Master Orchestration Configuration - Full Autonomy Enabled
+
+# Project paths (local filesystem)
+project_paths:
+  whatsapp_analyser: /Users/robwhitaker/Development/WhatsAppAnalyser_v2/WhatsAppAnalyser_v2
+  healthos: /Users/robwhitaker/Development/HealthOS-v2_Replit
+
+# GitHub repository names (must match exactly)
+github_repos:
+  whatsapp_analyser: WhatsAppAnalyser_v2
+  healthos: HealthOS-v2_Replit
+
+# Automation schedule (AUTONOMOUS DEVELOPMENT ENABLED)
+automation_schedule:
+  autonomous_development:
+    enabled: true
+    time: "03:00"  # 3 AM runs
+    days: [monday, tuesday, wednesday, thursday, friday]
+  
+  weekly_reports:
+    enabled: true
+    time: "18:00"
+    days: [sunday]
+  
+  health_monitoring:
+    enabled: true
+    interval_minutes: 30
+
+# Notification preferences
+notification_preferences:
+  daily_summary: false
+  critical_alerts: false
+  weekly_reports: false
+  partnership_updates: false
+  deployment_notifications: false
+
+# Monitoring thresholds
+monitoring_thresholds:
+  test_coverage_min: 80
+  accessibility_score_min: 100
+  build_time_max: 300
+  error_rate_max: 0.05
+  response_time_max: 1000

@@ -1,0 +1,36 @@
+# Core automation
+schedule==1.2.0
+pyyaml==6.0.1
+jinja2==3.1.2
+
+# GitHub integration
+pygithub==2.1.1
+gitpython==3.1.40
+
+# AI services
+anthropic>=0.40.0
+openai==1.3.7
+
+# Document generation
+python-docx==1.0.1
+reportlab==4.0.7
+pypdf2==3.0.1
+qrcode==7.4.2
+
+# Data processing
+pandas==2.1.3
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# Communication
+slack-sdk==3.23.0
+requests==2.31.0
+
+# Development tools
+black==23.11.0
+flake8==6.1.0
+pytest==7.4.3
+
+# Additional dependencies for orchestrator
+python-dateutil==2.8.2
+python-dotenv==1.0.0

@@ -1,0 +1,19 @@
+{
+  "period": "2025-11-13 to 2025-11-20",
+  "whatsapp_analyser": {
+    "commits": 0,
+    "issues_closed": 0,
+    "prs_merged": 0,
+    "latest_commit": "No commits this week",
+    "status": "inactive"
+  },
+  "healthos": {
+    "commits": 0,
+    "issues_closed": 0,
+    "prs_merged": 0,
+    "latest_commit": "No commits this week",
+    "status": "inactive"
+  },
+  "summary": "This week: 0 commits, 0 PRs merged, 0 issues closed.\n(No commits in the past 7 days)",
+  "generated_at": "2025-11-20T20:45:47.212539"
+}

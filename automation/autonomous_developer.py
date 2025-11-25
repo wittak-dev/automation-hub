@@ -19,7 +19,12 @@ class AutonomousDeveloper:
         self.workspace = Path.home() / 'automation-hub' / 'workspace'
         self.workspace.mkdir(exist_ok=True)
         print("✅ AutonomousDeveloper initialized (Phase 2.1: Roadmap-Aware)")
-    
+
+    def _get_repo_url(self, repo_name: str) -> str:
+        """Get authenticated GitHub URL for repo"""
+        token = os.environ.get('GITHUB_TOKEN')
+        return f"https://{token}@github.com/{self.username}/{repo_name}.git"
+
     async def run_development_cycle(self, project: str) -> Dict:
         """Full autonomous development cycle with roadmap awareness"""
         print(f"🔨 Starting roadmap-aware autonomous development for {project}...")
@@ -400,14 +405,14 @@ Respond with ONLY the issue number (e.g., "42")."""
     def _prepare_workspace(self, project: str, repo_name: str, issue) -> Path:
         """Clone repo and create feature branch"""
         print(f"📦 Preparing workspace...")
-        
+
         work_dir = self.workspace / f"{project}_{issue.number}_{datetime.now().strftime('%H%M%S')}"
         if work_dir.exists():
             shutil.rmtree(work_dir)
         work_dir.mkdir(parents=True)
-        
+
         # Clone with auth token
-        clone_url = f"https://{os.getenv('GITHUB_TOKEN')}@github.com/{self.username}/{repo_name}.git"
+        clone_url = self._get_repo_url(repo_name)
         subprocess.run(
             ['git', 'clone', clone_url, str(work_dir)],
             check=True,
@@ -510,17 +515,26 @@ Respond ONLY with JSON:
         try:
             message = self.anthropic.messages.create(
                 model="claude-sonnet-4-20250514",
-                max_tokens=4000,
+                max_tokens=8000,
                 messages=[{"role": "user", "content": prompt}]
             )
-            
+
             response_text = message.content[0].text
-            
+
+            # Save response for debugging
+            log_file = Path.home() / 'automation-hub' / 'logs' / f'claude_response_{issue.number}.txt'
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+            log_file.write_text(response_text)
+
             # Extract JSON
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if json_match:
-                solution = json.loads(json_match.group())
-                print(f"   ✅ Solution generated")
+                raw_solution = json.loads(json_match.group())
+
+                # Transform Claude's response format to expected format
+                solution = self._transform_solution_format(raw_solution)
+
+                print(f"   ✅ Solution generated: {len(solution.get('files_to_create', []))} files to create, {len(solution.get('files_to_modify', []))} to modify, {len(solution.get('tests', []))} tests")
                 return {"status": "success", "changes": solution}
             else:
                 return {"status": "error", "error": "No JSON in response"}
@@ -528,7 +542,50 @@ Respond ONLY with JSON:
         except Exception as e:
             print(f"   ❌ Generation error: {e}")
             return {"status": "error", "error": str(e)}
-    
+
+    def _transform_solution_format(self, raw_solution: Dict) -> Dict:
+        """Transform Claude's response format to expected format"""
+        result = {
+            "files_to_create": [],
+            "files_to_modify": [],
+            "tests": [],
+            "commit_message": raw_solution.get("commit_message", "feat: autonomous update"),
+            "explanation": raw_solution.get("explanation", raw_solution.get("analysis", ""))
+        }
+
+        # Handle new format with "changes" array
+        if "changes" in raw_solution:
+            for change in raw_solution["changes"]:
+                action = change.get("action", "").lower()
+
+                if action == "create":
+                    # Check if it's a test file
+                    file_path = change.get("file", "")
+                    if "test" in file_path.lower() or file_path.endswith(".test.ts") or file_path.endswith(".spec.ts"):
+                        result["tests"].append({
+                            "path": file_path,
+                            "content": change.get("content", "")
+                        })
+                    else:
+                        result["files_to_create"].append({
+                            "path": file_path,
+                            "content": change.get("content", "")
+                        })
+
+                elif action == "modify":
+                    result["files_to_modify"].append({
+                        "path": change.get("file", ""),
+                        "new_content": change.get("content", "")
+                    })
+
+        # Handle old format (backward compatibility)
+        elif "files_to_create" in raw_solution:
+            result["files_to_create"] = raw_solution.get("files_to_create", [])
+            result["files_to_modify"] = raw_solution.get("files_to_modify", [])
+            result["tests"] = raw_solution.get("tests", [])
+
+        return result
+
     def _get_relevant_files(self, repo_path: Path, project: str) -> str:
         """Get context from key project files"""
         context = []

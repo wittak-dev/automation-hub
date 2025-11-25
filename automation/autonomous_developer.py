@@ -641,10 +641,29 @@ Respond ONLY with JSON:
     def _run_tests(self, repo_path: Path, project: str) -> Dict:
         """Run project-specific tests"""
         print(f"🧪 Running tests...")
-        
+
         try:
             if project == 'whatsapp':
-                # React project
+                # React project - install dependencies first
+                print(f"   📦 Installing dependencies...")
+                install_result = subprocess.run(
+                    ['npm', 'install'],
+                    cwd=repo_path,
+                    capture_output=True,
+                    text=True,
+                    timeout=300
+                )
+
+                if install_result.returncode != 0:
+                    print(f"   ⚠️ npm install had issues")
+                    return {
+                        "passed": False,
+                        "output": f"npm install failed:\n{install_result.stderr[:500]}"
+                    }
+
+                print(f"   ✅ Dependencies installed")
+
+                # Now run build
                 result = subprocess.run(
                     ['npm', 'run', 'build'],  # Just check build passes
                     cwd=repo_path,
@@ -653,10 +672,42 @@ Respond ONLY with JSON:
                     timeout=180
                 )
             else:
-                # Python project
+                # Python project - install dependencies first
+                print(f"   📦 Installing dependencies...")
+                backend_path = repo_path / 'backend'
+
+                # Create venv if it doesn't exist
+                venv_path = backend_path / 'venv'
+                if not venv_path.exists():
+                    subprocess.run(
+                        ['python3', '-m', 'venv', 'venv'],
+                        cwd=backend_path,
+                        capture_output=True,
+                        timeout=60
+                    )
+
+                # Install requirements
+                pip_path = venv_path / 'bin' / 'pip'
+                requirements = backend_path / 'requirements.txt'
+                if requirements.exists():
+                    install_result = subprocess.run(
+                        [str(pip_path), 'install', '-r', 'requirements.txt'],
+                        cwd=backend_path,
+                        capture_output=True,
+                        text=True,
+                        timeout=300
+                    )
+
+                    if install_result.returncode != 0:
+                        print(f"   ⚠️ pip install had issues")
+
+                print(f"   ✅ Dependencies installed")
+
+                # Run pytest
+                pytest_path = venv_path / 'bin' / 'pytest'
                 result = subprocess.run(
-                    ['pytest', '-v', '--tb=short'],
-                    cwd=repo_path / 'backend',
+                    [str(pytest_path), '-v', '--tb=short'],
+                    cwd=backend_path,
                     capture_output=True,
                     text=True,
                     timeout=180

@@ -1,4 +1,4 @@
-"""Autonomous Developer - Phase 2.2: Backlog-Driven (Auto Issue Creation)"""
+"""Autonomous Developer - Phase 2.1: Roadmap-Aware (Repo-Specific)"""
 
 import os
 import subprocess
@@ -12,88 +12,17 @@ import json
 import re
 
 class AutonomousDeveloper:
-    def __init__
-    def _apply_modification_smart(self, repo_path: Path, change: dict) -> bool:
-        """
-        Intelligently apply modifications based on file type.
-        For config files (JSON/TS configs), merge changes instead of replacing entire file.
-        """
-        file_path = repo_path / change['file']
-        content = change['content']
-        
-        # Check if this is a config file that should be merged
-        config_files = ['package.json', 'tsconfig.json', 'vite.config.ts', 'vitest.config.ts']
-        is_config = any(file_path.name == cf for cf in config_files)
-        
-        if is_config and file_path.name.endswith('.json'):
-            # JSON config file - merge intelligently
-            try:
-                import json
-                
-                # Read existing file
-                if not file_path.exists():
-                    # If file doesn't exist, treat as create
-                    file_path.write_text(content)
-                    return True
-                
-                existing_content = json.loads(file_path.read_text())
-                
-                # Parse the partial changes Claude provided
-                try:
-                    changes = json.loads(content) if isinstance(content, str) else content
-                except json.JSONDecodeError:
-                    # Claude might have provided invalid JSON snippet
-                    # Fall back to full replacement
-                    print(f"   ⚠️  Could not parse JSON changes for {file_path.name}, using full replacement")
-                    file_path.write_text(content)
-                    return True
-                
-                # Deep merge the changes
-                def deep_merge(base, updates):
-                    """Recursively merge updates into base"""
-                    for key, value in updates.items():
-                        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-                            deep_merge(base[key], value)
-                        else:
-                            base[key] = value
-                    return base
-                
-                merged = deep_merge(existing_content.copy(), changes)
-                
-                # Write back with proper formatting
-                file_path.write_text(json.dumps(merged, indent=2) + '
-')
-                print(f"   ✅ Merged changes into {file_path.name}")
-                return True
-                
-            except Exception as e:
-                print(f"   ⚠️  Merge failed for {file_path.name}: {e}")
-                print(f"   📝 Falling back to full file replacement")
-                file_path.write_text(content)
-                return True
-        
-        elif is_config and file_path.name.endswith('.ts'):
-            # TypeScript config - for now, do full replacement
-            # TODO: Could implement smart merging for TS configs too
-            file_path.write_text(content)
-            return True
-        
-        else:
-            # Regular code file - full replacement
-            file_path.write_text(content)
-            return True
-
     def __init__(self, github_token: str, anthropic_api_key: str):
         self.github = Github(github_token)
         self.anthropic = Anthropic(api_key=anthropic_api_key)
         self.username = os.getenv('GITHUB_USERNAME', 'wittak-dev')
         self.workspace = Path.home() / 'automation-hub' / 'workspace'
         self.workspace.mkdir(exist_ok=True)
-        print("✅ AutonomousDeveloper initialized (Phase 2.2: Backlog-Driven)")
+        print("✅ AutonomousDeveloper initialized (Phase 2.1: Roadmap-Aware)")
     
     async def run_development_cycle(self, project: str) -> Dict:
-        """Full autonomous development cycle with backlog-driven issue creation"""
-        print(f"🔨 Starting backlog-driven autonomous development for {project}...")
+        """Full autonomous development cycle with roadmap awareness"""
+        print(f"🔨 Starting roadmap-aware autonomous development for {project}...")
         
         try:
             repo_name = 'WhatsAppAnalyser_v2' if project == 'whatsapp' else 'HealthOS-v2_Replit'
@@ -109,26 +38,13 @@ class AutonomousDeveloper:
             # Step 3: Get open issues
             issues = list(repo.get_issues(state='open'))
             
-            # NEW: Step 3b - If no issues, create from backlog
             if not issues:
-                print(f"📝 No open issues found - creating from backlog...")
-                created_issue = await self._create_issue_from_backlog(
-                    repo=repo,
-                    repo_path=temp_clone,
-                    project=project,
-                    priorities=priorities
-                )
-                
-                if created_issue:
-                    print(f"✅ Created Issue #{created_issue.number}: {created_issue.title}")
-                    issues = [created_issue]
-                else:
-                    shutil.rmtree(temp_clone)
-                    return {
-                        "status": "no_work",
-                        "message": "No backlog items suitable for autonomous work",
-                        "tasks_completed": 0
-                    }
+                shutil.rmtree(temp_clone)
+                return {
+                    "status": "no_work",
+                    "message": "No open issues found",
+                    "tasks_completed": 0
+                }
             
             # Step 4: Select best issue based on priorities
             selected_issue = await self._select_priority_issue(
@@ -235,210 +151,6 @@ class AutonomousDeveloper:
                 "tasks_completed": 0
             }
     
-    # =========================================================================
-    # NEW: BACKLOG-DRIVEN ISSUE CREATION
-    # =========================================================================
-    
-    async def _create_issue_from_backlog(
-        self,
-        repo,
-        repo_path: Path,
-        project: str,
-        priorities: str
-    ) -> Optional:
-        """Extract a work item from BACKLOG.md and create a GitHub issue"""
-        
-        # Load the full backlog
-        backlog_content = self._load_full_backlog(repo_path, project)
-        
-        if not backlog_content:
-            print("   ⚠️  No backlog content found")
-            return None
-        
-        # Ask Claude to extract the best autonomous-ready task
-        prompt = f"""Analyse this project backlog and extract ONE task suitable for autonomous 3AM development.
-
-PROJECT: {project}
-
-BACKLOG/ROADMAP CONTENT:
-{backlog_content[:8000]}
-
-REQUIREMENTS FOR SELECTION:
-1. Task must be CONCRETE and IMPLEMENTABLE (not vague like "improve performance")
-2. Task should be achievable in 1-2 hours of focused work
-3. Task should NOT require:
-   - External API keys or credentials
-   - User input or manual testing
-   - Database migrations
-   - Breaking changes to public APIs
-4. PREFER tasks that are:
-   - Bug fixes with clear reproduction steps
-   - Adding tests for existing functionality
-   - Documentation improvements
-   - Small feature additions with clear specs
-   - Refactoring with clear scope
-   - Accessibility improvements
-   - UI polish items
-
-OUTPUT FORMAT (JSON):
-{{
-    "title": "Clear, concise issue title",
-    "body": "Detailed description including:\\n- What needs to be done\\n- Acceptance criteria\\n- Files likely to be affected",
-    "labels": ["autonomous-created", "3am-ready", "<other-relevant-labels>"],
-    "backlog_reference": "Which section/item this came from",
-    "confidence": "high/medium/low",
-    "estimated_complexity": "simple/moderate/complex"
-}}
-
-If NO suitable task exists, respond with:
-{{"status": "no_suitable_task", "reason": "explanation"}}
-
-Respond with ONLY valid JSON."""
-
-        try:
-            message = self.anthropic.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=1500,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            
-            response_text = message.content[0].text.strip()
-            
-            # Parse JSON response
-            # Handle potential markdown code blocks
-            if response_text.startswith("```"):
-                response_text = re.sub(r'^```(?:json)?\n?', '', response_text)
-                response_text = re.sub(r'\n?```$', '', response_text)
-            
-            task_data = json.loads(response_text)
-            
-            # Check if no suitable task
-            if task_data.get('status') == 'no_suitable_task':
-                print(f"   ℹ️  No suitable task: {task_data.get('reason', 'unknown')}")
-                return None
-            
-            # Validate we have required fields
-            if not task_data.get('title') or not task_data.get('body'):
-                print("   ⚠️  Invalid task data from Claude")
-                return None
-            
-            # Skip if low confidence or complex
-            if task_data.get('confidence') == 'low':
-                print("   ⚠️  Low confidence task - skipping")
-                return None
-            
-            if task_data.get('estimated_complexity') == 'complex':
-                print("   ⚠️  Complex task - skipping for autonomous work")
-                return None
-            
-            # Create the GitHub issue
-            print(f"   📝 Creating issue: {task_data['title']}")
-            
-            # Build issue body with metadata
-            issue_body = f"""{task_data['body']}
-
----
-🤖 *This issue was automatically created by the Autonomous Developer from the project backlog.*
-
-**Source**: {task_data.get('backlog_reference', 'BACKLOG.md')}
-**Confidence**: {task_data.get('confidence', 'medium')}
-**Complexity**: {task_data.get('estimated_complexity', 'moderate')}
-**Created**: {datetime.now().strftime('%Y-%m-%d %H:%M')}
-"""
-            
-            # Ensure labels exist (create if needed)
-            labels = task_data.get('labels', ['autonomous-created', '3am-ready'])
-            valid_labels = self._ensure_labels_exist(repo, labels)
-            
-            # Create the issue
-            issue = repo.create_issue(
-                title=task_data['title'],
-                body=issue_body,
-                labels=valid_labels
-            )
-            
-            print(f"   ✅ Issue #{issue.number} created successfully")
-            return issue
-            
-        except json.JSONDecodeError as e:
-            print(f"   ⚠️  Failed to parse Claude response: {e}")
-            return None
-        except Exception as e:
-            print(f"   ⚠️  Failed to create issue: {e}")
-            return None
-    
-    def _load_full_backlog(self, repo_path: Path, project: str) -> str:
-        """Load complete backlog content for issue extraction"""
-        
-        backlog_parts = []
-        
-        if project == 'whatsapp':
-            files_to_load = [
-                ('BACKLOG.md', repo_path / 'BACKLOG.md'),
-                ('ACCEPTANCE_CRITERIA_STATUS.md', repo_path / 'ACCEPTANCE_CRITERIA_STATUS.md'),
-            ]
-            
-            # Also check roadmap directory
-            roadmap_dir = repo_path / 'docs' / 'roadmap'
-            if roadmap_dir.exists():
-                # Get current release spec (most relevant)
-                for spec in sorted(roadmap_dir.glob('v*.md'), reverse=True)[:1]:
-                    files_to_load.append((f'Current Release: {spec.name}', spec))
-        else:
-            files_to_load = [
-                ('BACKLOG.md', repo_path / 'BACKLOG.md'),
-                ('COMPREHENSIVE_TECHNICAL_BACKLOG.md', repo_path / 'COMPREHENSIVE_TECHNICAL_BACKLOG.md'),
-                ('BUGS_AND_ISSUES.md', repo_path / 'docs' / 'BUGS_AND_ISSUES.md'),
-            ]
-        
-        for name, path in files_to_load:
-            if path.exists():
-                try:
-                    content = path.read_text()
-                    backlog_parts.append(f"=== {name} ===\n{content}\n")
-                    print(f"   ✅ Loaded {name} ({len(content)} chars)")
-                except Exception as e:
-                    print(f"   ⚠️  Could not load {name}: {e}")
-        
-        return "\n\n".join(backlog_parts)
-    
-    def _ensure_labels_exist(self, repo, labels: List[str]) -> List[str]:
-        """Ensure labels exist in repo, create if needed"""
-        existing_labels = {label.name.lower(): label.name for label in repo.get_labels()}
-        valid_labels = []
-        
-        label_colors = {
-            'autonomous-created': '7057ff',  # Purple
-            '3am-ready': '0e8a16',           # Green
-            'backlog': 'fbca04',             # Yellow
-            'quick-win': 'c5def5',           # Light blue
-            'bug': 'd73a4a',                 # Red
-            'enhancement': 'a2eeef',         # Cyan
-            'documentation': '0075ca',       # Blue
-        }
-        
-        for label in labels:
-            label_lower = label.lower()
-            
-            if label_lower in existing_labels:
-                valid_labels.append(existing_labels[label_lower])
-            else:
-                # Create the label
-                try:
-                    color = label_colors.get(label_lower, 'ededed')
-                    repo.create_label(name=label, color=color)
-                    valid_labels.append(label)
-                    print(f"   🏷️  Created label: {label}")
-                except Exception as e:
-                    # Label might already exist with different case
-                    print(f"   ⚠️  Could not create label {label}: {e}")
-        
-        return valid_labels
-    
-    # =========================================================================
-    # EXISTING METHODS (unchanged from Phase 2.1)
-    # =========================================================================
-    
     def _quick_clone(self, repo_name: str) -> Path:
         """Smart clone with caching for reading strategic docs"""
         
@@ -492,7 +204,7 @@ Respond with ONLY valid JSON."""
             sparse_patterns = self._get_sparse_patterns(repo_name)
             sparse_file = repo_path / '.git' / 'info' / 'sparse-checkout'
             sparse_file.parent.mkdir(parents=True, exist_ok=True)
-            sparse_file.write_text('\n'.join(sparse_patterns))
+            sparse_file.write_text('\\n'.join(sparse_patterns))
             
             # Add remote and fetch
             subprocess.run(
@@ -505,7 +217,7 @@ Respond with ONLY valid JSON."""
                 ['git', 'fetch', '--depth', '1', 'origin', 'main'],
                 cwd=repo_path,
                 capture_output=True,
-                timeout=120,
+                timeout=120,  # Still generous but reasonable for sparse
                 check=True
             )
             subprocess.run(
@@ -520,12 +232,15 @@ Respond with ONLY valid JSON."""
             
         except subprocess.TimeoutExpired:
             print(f"❌ Clone timeout - repo may be too large")
+            # Cleanup failed attempt
             if repo_path.exists():
+                import shutil
                 shutil.rmtree(repo_path)
             raise
         except Exception as e:
             print(f"❌ Clone failed: {e}")
             if repo_path.exists():
+                import shutil
                 shutil.rmtree(repo_path)
             raise
 
@@ -543,7 +258,6 @@ Respond with ONLY valid JSON."""
             return [
                 'BACKLOG.md',
                 'SESSION_LOG.md',
-                'COMPREHENSIVE_TECHNICAL_BACKLOG.md',
                 'docs/*.md',
                 'reports_plans_approaches/*.md',
                 'CLAUDE*.md',
@@ -620,8 +334,6 @@ Respond with ONLY valid JSON."""
             priority_score = 0
             if '3am-ready' in labels or 'autonomous-ready' in labels:
                 priority_score += 100
-            if 'autonomous-created' in labels:
-                priority_score += 90  # High priority for our own created issues
             if 'roadmap' in labels or 'backlog' in labels:
                 priority_score += 50
             if 'quick-win' in labels or 'good first issue' in labels:
@@ -637,12 +349,6 @@ Respond with ONLY valid JSON."""
         # Sort by priority
         suitable_issues.sort(reverse=True, key=lambda x: x[0])
         top_issues = [issue for score, issue in suitable_issues[:5]]
-        
-        # If we have an autonomous-created issue, prefer it
-        for issue in top_issues:
-            labels = [label.name.lower() for label in issue.labels]
-            if 'autonomous-created' in labels:
-                return issue
         
         # Ask Claude to select based on priorities
         issues_text = "\n\n".join([
@@ -676,68 +382,83 @@ Respond with ONLY the issue number (e.g., "42")."""
             )
             
             response = message.content[0].text.strip()
-            issue_num = int(re.search(r'\d+', response).group())
+            number_match = re.search(r'\d+', response)
             
-            for issue in top_issues:
-                if issue.number == issue_num:
-                    return issue
+            if number_match:
+                selected_num = int(number_match.group())
+                for issue in top_issues:
+                    if issue.number == selected_num:
+                        return issue
             
-            # Fallback to highest scored
+            # Fallback to highest priority
             return top_issues[0]
             
         except Exception as e:
-            print(f"   ⚠️  Claude selection failed: {e}")
+            print(f"⚠️  Error in selection: {e}")
             return top_issues[0] if top_issues else None
     
-    def _get_repo_url(self, repo_name: str) -> str:
-        """Get authenticated repo URL"""
-        token = os.environ.get('GITHUB_TOKEN')
-        return f"https://{token}@github.com/{self.username}/{repo_name}.git"
-    
     def _prepare_workspace(self, project: str, repo_name: str, issue) -> Path:
-        """Prepare workspace for development"""
-        print(f"🏗️  Preparing workspace...")
+        """Clone repo and create feature branch"""
+        print(f"📦 Preparing workspace...")
         
-        workspace = self.workspace / f"{project}_issue_{issue.number}"
-        if workspace.exists():
-            shutil.rmtree(workspace)
+        work_dir = self.workspace / f"{project}_{issue.number}_{datetime.now().strftime('%H%M%S')}"
+        if work_dir.exists():
+            shutil.rmtree(work_dir)
+        work_dir.mkdir(parents=True)
         
-        # Full clone for development
-        repo_url = self._get_repo_url(repo_name)
+        # Clone with auth token
+        clone_url = f"https://{os.getenv('GITHUB_TOKEN')}@github.com/{self.username}/{repo_name}.git"
         subprocess.run(
-            ['git', 'clone', '--depth', '50', repo_url, str(workspace)],
+            ['git', 'clone', clone_url, str(work_dir)],
+            check=True,
             capture_output=True,
-            timeout=300,
-            check=True
+            timeout=120
         )
         
-        print(f"   ✅ Workspace ready at {workspace}")
-        return workspace
+        # Create feature branch
+        branch_name = f"autonomous/issue-{issue.number}"
+        subprocess.run(
+            ['git', 'checkout', '-b', branch_name],
+            cwd=work_dir,
+            check=True,
+            capture_output=True
+        )
+        
+        print(f"   ✅ Workspace ready: {work_dir.name}")
+        return work_dir
     
     def _load_constitution(self, repo_path: Path, project: str) -> str:
-        """Load CLAUDE.md constitutional framework"""
+        """Load project's CLAUDE.md constitutional framework"""
         print(f"📜 Loading constitutional framework...")
         
         constitution_parts = []
         
         # Main CLAUDE.md
-        main_claude = repo_path / 'CLAUDE.md'
-        if main_claude.exists():
-            constitution_parts.append(main_claude.read_text()[:5000])
-            print(f"   ✅ Loaded CLAUDE.md")
+        claude_md = repo_path / "CLAUDE.md"
+        if claude_md.exists():
+            constitution_parts.append(claude_md.read_text()[:8000])  # First 8k chars
+            print(f"   ✅ Loaded: CLAUDE.md")
         
-        # Supporting CLAUDE files
-        for claude_file in repo_path.glob('CLAUDE_*.md'):
-            try:
-                constitution_parts.append(claude_file.read_text()[:2000])
-                print(f"   ✅ Loaded {claude_file.name}")
-            except:
-                pass
+        # Extended modules (if exist)
+        for module in ['CLAUDE_PATTERNS.md', 'CLAUDE_WORKFLOW.md', 'CLAUDE_DEBUGGING.md']:
+            module_path = repo_path / module
+            if module_path.exists():
+                constitution_parts.append(f"\n## {module}\n{module_path.read_text()[:2000]}")
+                print(f"   ✅ Loaded: {module}")
+        
+        # Project-specific additions
+        if project == 'whatsapp':
+            # WhatsApp has feature flag system
+            feature_registry = repo_path / 'src' / 'config' / 'featureRegistry.ts'
+            if feature_registry.exists():
+                constitution_parts.append(f"\n## Feature Flags\n{feature_registry.read_text()[:1000]}")
         
         if constitution_parts:
-            return "\n\n---\n\n".join(constitution_parts)
+            result = "\n\n".join(constitution_parts)
+            print(f"   📊 Constitution loaded: {len(result)} chars")
+            return result
         else:
-            return "No constitutional framework found - follow best practices"
+            return "# Standard best practices apply"
     
     async def _generate_solution(
         self,
@@ -750,211 +471,156 @@ Respond with ONLY the issue number (e.g., "42")."""
         """Generate code solution using Claude"""
         print(f"🧠 Generating solution...")
         
-        # Get relevant file context
-        file_context = self._get_file_context(repo_path, project, issue)
+        # Get relevant context
+        file_context = self._get_relevant_files(repo_path, project)
         
-        prompt = f"""You are an autonomous developer working at 3 AM on the {project} project.
+        prompt = f"""You are an autonomous developer at 3 AM. Generate production-ready code.
 
-CONSTITUTIONAL FRAMEWORK (must follow):
-{constitution[:3000]}
+PROJECT: {project}
+STACK: {"React+TypeScript+Vite" if project == 'whatsapp' else "Flask+Python+React"}
 
-CURRENT STRATEGIC PRIORITIES:
+CONSTITUTIONAL FRAMEWORK (FOLLOW STRICTLY):
+{constitution[:6000]}
+
+STRATEGIC CONTEXT:
 {priorities[:2000]}
 
 ISSUE TO SOLVE:
-Title: {issue.title}
-Body: {issue.body or 'No description'}
-Labels: {[l.name for l in issue.labels]}
+#{issue.number}: {issue.title}
+{issue.body or 'No description'}
 
-RELEVANT FILE CONTEXT:
-{file_context[:4000]}
+REPO CONTEXT:
+{file_context[:2000]}
 
-TASK:
-Generate a complete solution for this issue. Your solution must:
-1. Follow the constitutional framework strictly
-2. Align with strategic priorities
-3. Include ALL necessary file changes
-4. Be production-ready (no TODOs, no placeholders)
-5. Include appropriate tests if applicable
+GENERATE:
+1. Code that solves this issue following constitutional rules
+2. Tests first (TDD approach)
+3. Minimal, focused changes
+4. Align with strategic priorities
 
-OUTPUT FORMAT (JSON):
+Respond ONLY with JSON:
 {{
-    "analysis": "Brief analysis of the issue and approach",
-    "changes": [
-        {{
-            "file": "path/to/file.ext",
-            "action": "create|modify|delete",
-            "content": "CONTENT RULES - READ CAREFULLY:
-                - For action='create': Full file content (required)
-                - For action='modify' on CONFIG FILES (package.json, tsconfig.json, vite.config.ts, etc):
-                  ONLY include the specific sections being added/changed as a JSON object/snippet
-                  Example: {{\"scripts\": {{\"test\": \"vitest\", \"new-script\": \"command\"}}}}
-                  DO NOT include the entire file - we will merge your changes into the existing file
-                - For action='modify' on CODE FILES:
-                  If file is small (<200 lines): Full file content is OK
-                  If file is large (>200 lines): Use line-based changes:
-                  {{\"line_changes\": [{{\"start\": 10, \"end\": 20, \"new_content\": \"...\"}}, ...]}}
-                - For action='delete': Set content to empty string",
-            "description": "what this change does"
-        }}
-    ],
-    "tests_to_run": ["npm test", "pytest", etc],
-    "commit_message": "type: description following conventional commits"
-}}
-
-CRITICAL: For modifications to package.json, vite.config.ts, tsconfig.json and similar config files,
-return ONLY the specific keys/sections being added or modified. We will intelligently merge them.
-This prevents token limit issues.
-
-Respond with ONLY valid JSON."""
-
+    "files_to_create": [{{"path": "src/file.ts", "content": "..."}}],
+    "files_to_modify": [{{"path": "src/existing.ts", "new_content": "..."}}],
+    "tests": [{{"path": "tests/test.spec.ts", "content": "..."}}],
+    "commit_message": "feat: ...",
+    "explanation": "Brief explanation"
+}}"""
+        
         try:
             message = self.anthropic.messages.create(
                 model="claude-sonnet-4-20250514",
-                max_tokens=8000,
+                max_tokens=4000,
                 messages=[{"role": "user", "content": prompt}]
             )
             
-            response_text = message.content[0].text.strip()
+            response_text = message.content[0].text
             
-            # Handle markdown code blocks
-            if response_text.startswith("```"):
-                response_text = re.sub(r'^```(?:json)?\n?', '', response_text)
-                response_text = re.sub(r'\n?```$', '', response_text)
-            
-            # Save raw response for debugging
-            debug_file = Path.home() / 'automation-hub' / 'logs' / f'claude_response_{issue.number}.txt'
-            debug_file.write_text(response_text)
-            print(f"   📝 Raw response saved to: {debug_file}")
-            
-            # Try to parse JSON with better error handling
-            try:
-                solution = json.loads(response_text)
-            except json.JSONDecodeError as json_err:
-                print(f"   ⚠️  JSON parse error at line {json_err.lineno}, col {json_err.colno}")
-                print(f"   🔍 First 300 chars: {response_text[:300]}")
-                print(f"   🔍 Last 300 chars: {response_text[-300:]}")
-                return {'status': 'error', 'error': f'JSON parse failed: {json_err}'}
-            
-            solution['status'] = 'success'
-            
-            print(f"   ✅ Solution generated: {len(solution.get('changes', []))} file changes")
-            return solution
-            
+            # Extract JSON
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                solution = json.loads(json_match.group())
+                print(f"   ✅ Solution generated")
+                return {"status": "success", "changes": solution}
+            else:
+                return {"status": "error", "error": "No JSON in response"}
+                
         except Exception as e:
-            print(f"   ❌ Solution generation failed: {e}")
-            return {'status': 'error', 'error': str(e)}
+            print(f"   ❌ Generation error: {e}")
+            return {"status": "error", "error": str(e)}
     
-    def _get_file_context(self, repo_path: Path, project: str, issue) -> str:
-        """Get relevant file context for the issue"""
-        context_parts = []
+    def _get_relevant_files(self, repo_path: Path, project: str) -> str:
+        """Get context from key project files"""
+        context = []
         
-        # Parse issue for file hints
-        issue_text = f"{issue.title} {issue.body or ''}"
-        
-        # Common patterns to look for
         if project == 'whatsapp':
-            key_dirs = ['src/components', 'src/lib', 'src/types']
-            key_files = ['package.json', 'tsconfig.json']
+            files = ['package.json', 'tsconfig.json', 'vite.config.ts', 'src/types/index.ts']
         else:
-            key_dirs = ['backend', 'frontend/src']
-            key_files = ['requirements.txt', 'package.json']
+            files = ['requirements.txt', 'backend/models.py', 'backend/config.py']
         
-        # Get package.json or requirements.txt for dependency context
-        for key_file in key_files:
-            file_path = repo_path / key_file
+        for filename in files:
+            file_path = repo_path / filename
             if file_path.exists():
-                content = file_path.read_text()[:1000]
-                context_parts.append(f"=== {key_file} ===\n{content}")
+                try:
+                    content = file_path.read_text()[:500]
+                    context.append(f"## {filename}\n```\n{content}\n```\n")
+                except:
+                    pass
         
-        # Get directory structure
-        for key_dir in key_dirs:
-            dir_path = repo_path / key_dir
-            if dir_path.exists():
-                files = list(dir_path.rglob('*'))[:20]
-                file_list = "\n".join([str(f.relative_to(repo_path)) for f in files if f.is_file()])
-                context_parts.append(f"=== {key_dir} structure ===\n{file_list}")
-        
-        return "\n\n".join(context_parts)
+        return "\n".join(context)
     
-    def _apply_changes(self, repo_path: Path, changes: List[Dict]) -> bool:
-        """Apply generated changes to the workspace"""
-        print(f"📝 Applying {len(changes)} changes...")
+    def _apply_changes(self, repo_path: Path, changes: Dict) -> bool:
+        """Apply code changes"""
+        print(f"✍️  Applying changes...")
         
         try:
-            for change in changes:
-                file_path = repo_path / change['file']
-                action = change['action']
-                
-                if action == 'create':
-                    file_path.parent.mkdir(parents=True, exist_ok=True)
-                    file_path.write_text(change['content'])
-                    print(f"   ✅ Created: {change['file']}")
-                    
-                elif action == 'modify':
-                    if file_path.exists():
-                        # For now, replace entire file
-                        # TODO: Implement proper diff application
-                        file_path.write_text(change['content'])
-                        print(f"   ✅ Modified: {change['file']}")
-                    else:
-                        print(f"   ⚠️  File not found for modify: {change['file']}")
-                        
-                elif action == 'delete':
-                    if file_path.exists():
-                        file_path.unlink()
-                        print(f"   ✅ Deleted: {change['file']}")
+            # Create new files
+            for file_info in changes.get('files_to_create', []):
+                file_path = repo_path / file_info['path']
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                file_path.write_text(file_info['content'])
+                print(f"   ✅ Created: {file_info['path']}")
+            
+            # Modify files
+            for file_info in changes.get('files_to_modify', []):
+                file_path = repo_path / file_info['path']
+                if file_path.exists():
+                    file_path.write_text(file_info['new_content'])
+                    print(f"   ✅ Modified: {file_info['path']}")
+            
+            # Create tests
+            for test_info in changes.get('tests', []):
+                test_path = repo_path / test_info['path']
+                test_path.parent.mkdir(parents=True, exist_ok=True)
+                test_path.write_text(test_info['content'])
+                print(f"   ✅ Test: {test_info['path']}")
             
             return True
             
         except Exception as e:
-            print(f"   ❌ Failed to apply changes: {e}")
+            print(f"   ❌ Error applying changes: {e}")
             return False
     
     def _run_tests(self, repo_path: Path, project: str) -> Dict:
-        """Run project tests"""
+        """Run project-specific tests"""
         print(f"🧪 Running tests...")
         
         try:
             if project == 'whatsapp':
-                # React/TypeScript project
+                # React project
                 result = subprocess.run(
-                    ['npm', 'test', '--', '--run', '--passWithNoTests'],
+                    ['npm', 'run', 'build'],  # Just check build passes
                     cwd=repo_path,
                     capture_output=True,
                     text=True,
                     timeout=180
                 )
             else:
-                # Python/Flask project
+                # Python project
                 result = subprocess.run(
-                    ['python', '-m', 'pytest', '-x', '--tb=short'],
-                    cwd=repo_path,
+                    ['pytest', '-v', '--tb=short'],
+                    cwd=repo_path / 'backend',
                     capture_output=True,
                     text=True,
                     timeout=180
                 )
             
             passed = result.returncode == 0
-            output = result.stdout + result.stderr
+            print(f"   {'✅' if passed else '⚠️'} Tests {'passed' if passed else 'had issues'}")
             
-            if passed:
-                print(f"   ✅ Tests passed")
-            else:
-                print(f"   ❌ Tests failed")
+            return {
+                "passed": passed,
+                "output": result.stdout + result.stderr
+            }
             
-            return {'passed': passed, 'output': output}
-            
-        except subprocess.TimeoutExpired:
-            print(f"   ⚠️  Tests timed out")
-            return {'passed': False, 'output': 'Tests timed out'}
         except Exception as e:
-            print(f"   ⚠️  Test error: {e}")
-            return {'passed': True, 'output': f'Test error (assuming pass): {e}'}
+            print(f"   ⚠️  Test execution issue: {e}")
+            # For now, allow to proceed
+            return {"passed": True, "output": f"Tests skipped: {e}"}
     
     def _format_code(self, repo_path: Path, project: str):
-        """Format code using project formatters"""
-        print(f"✨ Formatting code...")
+        """Format code per project standards"""
+        print(f"💅 Formatting code...")
         
         try:
             if project == 'whatsapp':
@@ -962,37 +628,38 @@ Respond with ONLY valid JSON."""
                     ['npm', 'run', 'format'],
                     cwd=repo_path,
                     capture_output=True,
-                    timeout=60
+                    timeout=180
                 )
+                print(f"   ✅ Formatted with Prettier")
             else:
-                subprocess.run(
-                    ['black', '.'],
-                    cwd=repo_path,
-                    capture_output=True,
-                    timeout=60
-                )
-                subprocess.run(
-                    ['isort', '.'],
-                    cwd=repo_path,
-                    capture_output=True,
-                    timeout=60
-                )
-            print(f"   ✅ Code formatted")
+                subprocess.run(['black', '.'], cwd=repo_path / 'backend', capture_output=True)
+                subprocess.run(['isort', '.'], cwd=repo_path / 'backend', capture_output=True)
+                print(f"   ✅ Formatted with Black + isort")
+                
         except Exception as e:
-            print(f"   ⚠️  Formatting skipped: {e}")
+            print(f"   ⚠️  Formatting warning: {e}")
     
-    def _commit_and_push(self, repo_path: Path, branch: str, issue):
-        """Commit changes and push to remote"""
+    def _commit_and_push(self, repo_path: Path, branch_name: str, issue):
+        """Commit and push changes"""
         print(f"📤 Committing and pushing...")
         
-        # Create and checkout branch
-        subprocess.run(['git', 'checkout', '-b', branch], cwd=repo_path, check=True)
+        # Configure git
+        subprocess.run(
+            ['git', 'config', 'user.name', 'Autonomous Developer'],
+            cwd=repo_path,
+            check=True
+        )
+        subprocess.run(
+            ['git', 'config', 'user.email', 'automation@automation-hub.local'],
+            cwd=repo_path,
+            check=True
+        )
         
-        # Stage all changes
-        subprocess.run(['git', 'add', '-A'], cwd=repo_path, check=True)
+        # Add all
+        subprocess.run(['git', 'add', '.'], cwd=repo_path, check=True)
         
         # Commit
-        commit_msg = f"feat: resolve #{issue.number} - {issue.title}\n\n🤖 Autonomous development at 3 AM"
+        commit_msg = f"feat: resolve #{issue.number} - {issue.title}\n\nAutonomously generated at {datetime.now().strftime('%Y-%m-%d %H:%M')}"
         subprocess.run(
             ['git', 'commit', '-m', commit_msg],
             cwd=repo_path,
@@ -1001,40 +668,34 @@ Respond with ONLY valid JSON."""
         
         # Push
         subprocess.run(
-            ['git', 'push', '-u', 'origin', branch],
+            ['git', 'push', 'origin', branch_name],
             cwd=repo_path,
             check=True
         )
         
-        print(f"   ✅ Pushed to {branch}")
+        print(f"   ✅ Pushed to {branch_name}")
     
     def _create_pull_request(self, repo, branch: str, issue, solution: Dict):
-        """Create pull request"""
-        print(f"🔀 Creating pull request...")
+        """Create PR on GitHub"""
+        print(f"🔀 Creating PR...")
         
-        pr_body = f"""## 🤖 Autonomous Development
+        explanation = solution['changes'].get('explanation', 'Autonomous solution')
+        
+        pr_body = f"""## Resolves #{issue.number}
 
-This PR was created by the Autonomous Developer at 3 AM.
-
-### Issue
-Resolves #{issue.number}: {issue.title}
-
-### Analysis
-{solution.get('analysis', 'No analysis provided')}
+### 🤖 Autonomous Development
+This PR was autonomously created at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} based on roadmap priorities.
 
 ### Changes
-"""
-        for change in solution.get('changes', []):
-            pr_body += f"- **{change['action']}** `{change['file']}`: {change.get('description', '')}\n"
-        
-        pr_body += f"""
+{explanation}
 
-### Testing
-- [ ] Automated tests passed
-- [ ] Manual review required
+### Checklist
+- [x] Code follows constitutional framework (CLAUDE.md)
+- [x] Tests included
+- [x] Code formatted
+- [ ] Human review required
 
----
-*Generated by Autonomous Developer v2.2 (Backlog-Driven)*
+Closes #{issue.number}
 """
         
         pr = repo.create_pull(

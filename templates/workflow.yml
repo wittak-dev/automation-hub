@@ -1,0 +1,44 @@
+# Autonomous development workflow — copy to TARGET_REPO/.github/workflows/autonomous-dev.yml
+# Replace TARGET_REPO_SLUG with the full repo slug, e.g. robwhitaker/nuuance
+#
+# Required secrets on the target repo:
+#   ANTHROPIC_API_KEY  — Claude API key
+#   AUTOMATION_HUB_PAT — GitHub PAT with `repo` and `workflow` scopes
+
+name: Autonomous Dev
+
+on:
+  schedule:
+    - cron: "0 3 * * 1-5"   # 03:00 UTC, Monday–Friday
+  workflow_dispatch:          # allow manual trigger for smoke tests
+
+jobs:
+  autonomous-dev:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read          # automation-hub checkout only; PAT handles the rest
+
+    steps:
+      - name: Checkout automation-hub
+        uses: actions/checkout@v4
+        with:
+          repository: wittak-dev/automation-hub
+          token: ${{ secrets.AUTOMATION_HUB_PAT }}
+          path: automation-hub
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: automation-hub/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r automation-hub/requirements.txt
+
+      - name: Run autonomous dev
+        run: python automation-hub/automation/autonomous_dev.py --target-repo TARGET_REPO_SLUG
+        env:
+          GITHUB_TOKEN: ${{ secrets.AUTOMATION_HUB_PAT }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

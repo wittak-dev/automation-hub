@@ -1,0 +1,9 @@
+# Automation Hub v2 dependencies
+# Pinned to exact versions for reproducible CI runs
+
+claude-agent-sdk==0.1.71   # headless Claude Code execution, agent loop, setting_sources
+PyGithub==2.6.1            # GitHub API — issue fetch, PR creation, label filtering
+GitPython==3.1.44          # git clone, branch, push operations
+pytest==8.3.5              # test runner
+pytest-mock==3.14.0        # mocking for deterministic unit tests
+python-dotenv==1.1.0       # .env loading for local runs

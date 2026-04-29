@@ -1,0 +1,47 @@
+# AGENTS.md — Constitutional Framework for Autonomous Development
+
+## Project overview
+
+<!-- TODO: Replace with a 2–3 sentence description of this project. -->
+This is [PROJECT NAME]. It does [WHAT IT DOES].
+
+## Tech stack
+
+<!-- TODO: List your primary language, framework, test runner, formatter. -->
+- Language:
+- Framework:
+- Test runner:
+- Formatter:
+
+## Development rules
+
+- All new features must have accompanying tests.
+- Do not break existing tests; the test suite must be green after your changes.
+- Follow the existing code style — don't reformat files you haven't changed.
+- Keep commits atomic and well-described. Reference the issue number in the commit message.
+- Do NOT push or create PRs — the orchestrator handles that.
+
+## Running tests
+
+<!-- TODO: Replace with the exact commands to run the test suite. -->
+```bash
+# Example — adjust for your project:
+npm test          # JavaScript / TypeScript
+pytest            # Python
+```
+
+## File structure
+
+<!-- TODO: Describe the key directories in 1 line each. -->
+```
+src/          — application source
+tests/        — test suite
+docs/         — documentation
+```
+
+## Out of scope for autonomous dev
+
+<!-- TODO: List any areas the autonomous agent should NOT touch. -->
+- Secrets or credentials
+- CI/CD pipeline configuration
+- Database migrations (require human review)

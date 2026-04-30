@@ -1,5 +1,5 @@
 # Autonomous development workflow — copy to TARGET_REPO/.github/workflows/autonomous-dev.yml
-# Replace TARGET_REPO_SLUG with the full repo slug, e.g. robwhitaker/nuuance
+# No substitution needed: ${{ github.repository }} resolves to the host repo automatically.
 #
 # Required secrets on the target repo:
 #   ANTHROPIC_API_KEY  — Claude API key
@@ -46,7 +46,7 @@ jobs:
       - name: Run autonomous dev
         run: |
           python .automation-hub/automation/autonomous_dev.py \
-            --target-repo TARGET_REPO_SLUG \
+            --target-repo ${{ github.repository }} \
             --repo-dir "${{ github.workspace }}"
         env:
           GITHUB_TOKEN: ${{ secrets.AUTOMATION_HUB_PAT }}

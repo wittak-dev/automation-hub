@@ -19,7 +19,8 @@ from automation.lib.issue_selection import get_oldest_issue
 from automation.lib.prompt_builder import build as build_prompt
 from automation.lib.pr_creator import BRANCH_PREFIX, create as create_pr
 
-load_dotenv()
+if Path(".env").exists():
+    load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,

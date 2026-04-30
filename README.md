@@ -19,7 +19,16 @@ In the target repo, go to **Settings → Secrets and variables → Actions** and
 | Secret | Value |
 |--------|-------|
 | `ANTHROPIC_API_KEY` | Your Claude API key |
-| `AUTOMATION_HUB_PAT` | A GitHub Personal Access Token with `repo` and `workflow` scopes |
+| `AUTOMATION_HUB_PAT` | A fine-grained GitHub PAT (see permissions below) |
+
+**Fine-grained PAT permissions required:**
+
+| Resource | Access |
+|----------|--------|
+| `wittak-dev/automation-hub` | Contents: Read |
+| `OWNER/target-repo` | Contents: Read & Write, Pull requests: Read & Write |
+
+> **Omit the `workflow` scope.** A fine-grained PAT without workflow permissions cannot modify `.github/workflows/` files, which is the correct safe default — the agent has no business touching CI configuration. Only add workflow write access if you explicitly want the agent to be able to modify workflow files.
 
 ### 3. Add the workflow file
 
@@ -29,13 +38,15 @@ Copy `templates/workflow.yml` from this repo into the target repo at `.github/wo
 TARGET_REPO_SLUG  →  owner/repo-name   (e.g. robwhitaker/nuuance)
 ```
 
-### 4. Add an `AGENTS.md` constitutional framework
+### 4. Add a `CLAUDE.md` constitutional framework
 
-Copy `templates/AGENTS.md.template` to the target repo root as `AGENTS.md`. Fill in the project description, tech stack, test commands, and any areas the agent should not touch.
+Copy `templates/CLAUDE.md.template` to the target repo root as `CLAUDE.md`. Fill in the project description, tech stack, test commands, and any areas the agent should not touch.
 
 ### 5. Create a smoke-test issue
 
 Open an issue in the target repo labelled `autonomous-dev` with a small, self-contained task — for example: *"Add a CONTRIBUTING.md file with basic contribution guidelines"*.
+
+> **Before enabling the schedule:** set a monthly Anthropic API budget cap in the [Anthropic console](https://console.anthropic.com). A misconfigured agent running across multiple repos at 03:00 can quietly burn real money before you notice.
 
 ### 6. Trigger and verify
 
@@ -65,11 +76,22 @@ pip install -r requirements.txt
 
 # Run the test suite
 pytest
+```
 
-# Dry-run against any repo (no SDK call, no git operations)
+### Smoke testing with --dry-run
+
+```bash
 export GITHUB_TOKEN=ghp_...
 python automation/autonomous_dev.py --target-repo OWNER/REPO --dry-run
 ```
+
+When run against a repo with **no open `autonomous-dev` issues** (such as this repo itself), the expected output is:
+
+```
+No open autonomous-dev issues in OWNER/REPO — nothing to do.
+```
+
+That is the success path, not a failure. The orchestrator exits 0 and does nothing — which is correct behaviour when there is no work to pick up. To exercise the full prompt-construction path, either pass `--issue N` with an existing issue number, or create a labelled issue first.
 
 ## Architecture
 

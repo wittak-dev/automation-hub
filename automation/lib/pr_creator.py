@@ -1,8 +1,8 @@
 """Push the agent's branch and open a GitHub PR."""
 
+import subprocess
 from pathlib import Path
 
-import git
 from github import Github
 from github.Issue import Issue
 
@@ -10,13 +10,16 @@ BRANCH_PREFIX = "autonomous/issue-"
 
 
 def create(gh: Github, repo_name: str, issue: Issue, repo_dir: Path) -> str:
-    """Push HEAD to *branch_name* and open a PR. Returns the PR URL."""
+    """Push HEAD to the feature branch and open a PR. Returns the PR URL."""
     branch_name = f"{BRANCH_PREFIX}{issue.number}"
-    local_repo = git.Repo(repo_dir)
 
-    # Push the feature branch to remote
-    origin = local_repo.remote("origin")
-    origin.push(refspec=f"HEAD:{branch_name}")
+    # Push feature branch (git auth is pre-configured by actions/checkout in CI,
+    # or by GITHUB_TOKEN embedded in the remote URL for local runs)
+    subprocess.run(
+        ["git", "push", "origin", f"HEAD:{branch_name}"],
+        cwd=repo_dir,
+        check=True,
+    )
 
     # Open PR via GitHub API
     gh_repo = gh.get_repo(repo_name)
@@ -28,9 +31,7 @@ def create(gh: Github, repo_name: str, issue: Issue, repo_dir: Path) -> str:
     )
 
     # Post a comment on the original issue linking the PR
-    issue.create_comment(
-        f"Autonomous development complete. PR opened: {pr.html_url}"
-    )
+    issue.create_comment(f"Autonomous development complete. PR opened: {pr.html_url}")
 
     return pr.html_url
 

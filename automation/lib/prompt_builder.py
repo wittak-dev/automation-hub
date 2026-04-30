@@ -27,7 +27,7 @@ def build(issue: Issue, repo_dir: Path) -> str:
 def _preamble() -> str:
     return (
         "You are an autonomous developer working on a GitHub issue. "
-        "Follow the project's CLAUDE.md / AGENTS.md constitutional framework exactly. "
+        "Follow the project's CLAUDE.md constitutional framework exactly. "
         "Write production-quality code with tests where appropriate."
     )
 

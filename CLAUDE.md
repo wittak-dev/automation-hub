@@ -14,10 +14,10 @@ automation/
   lib/
     issue_selection.py    fetch oldest open autonomous-dev issue (PyGithub)
     prompt_builder.py     build the Claude prompt (deterministic, no I/O side effects)
-    pr_creator.py         push branch, open PR, post comment (GitPython + PyGithub)
+    pr_creator.py         push branch, open PR, post comment (subprocess + PyGithub)
 templates/
   workflow.yml            GitHub Actions template for target repos
-  AGENTS.md.template      starter constitutional framework for onboarding
+  CLAUDE.md.template      starter constitutional framework for onboarding
 tests/
   test_issue_selection.py
   test_prompt_builder.py
@@ -35,6 +35,15 @@ tests/
   reasonable way to achieve the goal with the existing set.
 - **Do not commit secrets.** `GITHUB_TOKEN`, `ANTHROPIC_API_KEY`, and any other credentials
   are environment variables only — never in code or config files.
+
+## Bounded-runaway mitigations
+
+| Bound | Where enforced | Value |
+|-------|---------------|-------|
+| Agent turn limit | `ClaudeAgentOptions(max_turns=40)` in `autonomous_dev.py` | 40 turns |
+| Wall-clock limit | `timeout-minutes: 45` in `templates/workflow.yml` | 45 minutes |
+
+Both limits are deliberate. If either fires in practice, investigate before raising them — runaway is more likely than genuine need for more turns/time.
 
 ## Running tests
 

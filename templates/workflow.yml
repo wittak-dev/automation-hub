@@ -3,7 +3,7 @@
 #
 # Required secrets on the target repo:
 #   ANTHROPIC_API_KEY  — Claude API key
-#   AUTOMATION_HUB_PAT — GitHub PAT with `repo` and `workflow` scopes
+#   AUTOMATION_HUB_PAT — Fine-grained PAT (see README.md step 2 for required permissions)
 
 name: Autonomous Dev
 
@@ -15,30 +15,39 @@ on:
 jobs:
   autonomous-dev:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
-      contents: read          # automation-hub checkout only; PAT handles the rest
+      contents: read          # minimum — PAT handles writes
 
     steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AUTOMATION_HUB_PAT }}
+          # no 'path' → checks out to ${{ github.workspace }} (cwd for subsequent steps)
+
       - name: Checkout automation-hub
         uses: actions/checkout@v4
         with:
           repository: wittak-dev/automation-hub
           token: ${{ secrets.AUTOMATION_HUB_PAT }}
-          path: automation-hub
+          path: .automation-hub
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: automation-hub/requirements.txt
+          cache-dependency-path: .automation-hub/requirements.txt
 
       - name: Install dependencies
-        run: pip install -r automation-hub/requirements.txt
+        run: pip install -r .automation-hub/requirements.txt
 
       - name: Run autonomous dev
-        run: python automation-hub/automation/autonomous_dev.py --target-repo TARGET_REPO_SLUG
+        run: |
+          python .automation-hub/automation/autonomous_dev.py \
+            --target-repo TARGET_REPO_SLUG \
+            --repo-dir "${{ github.workspace }}"
         env:
           GITHUB_TOKEN: ${{ secrets.AUTOMATION_HUB_PAT }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

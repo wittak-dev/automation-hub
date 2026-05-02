@@ -21,6 +21,13 @@ workspace/*/
 .vscode/
 .idea/
 
+# SpecStory session history
+.specstory/
+
+# Claude Code
+.claude/worktrees/
+.claude/settings.local.json
+
 # Python
 *.py[cod]
 *$py.class

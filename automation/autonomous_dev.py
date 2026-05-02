@@ -105,13 +105,17 @@ async def run(args: argparse.Namespace) -> None:
     initial_sha = _git(["rev-parse", "HEAD"], repo_dir)
     last_summary = ""
 
-    async for message in query(prompt=prompt, options=options):
-        if isinstance(message, AssistantMessage):
-            for block in message.content:
-                if isinstance(block, TextBlock):
-                    last_summary = block.text
-        elif isinstance(message, ResultMessage):
-            log.info("Agent finished. Cost: $%.4f", message.total_cost_usd or 0.0)
+    try:
+        async for message in query(prompt=prompt, options=options):
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        last_summary = block.text
+            elif isinstance(message, ResultMessage):
+                log.info("Agent finished. Cost: $%.4f", message.total_cost_usd or 0.0)
+    except Exception as exc:
+        log.warning("Agent exited with error: %s", exc)
+        log.info("Checking for commits despite error …")
 
     # 5. Only open a PR if the agent committed something
     if _git(["rev-parse", "HEAD"], repo_dir) == initial_sha:

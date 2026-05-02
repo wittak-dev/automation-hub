@@ -99,7 +99,7 @@ Delete the `.github/workflows/autonomous-dev.yml` file from the target repo and 
 
 | Repo | Status | Notes |
 |------|--------|-------|
-| prodcheck | governance applied, pending git init + workflow | First target. Week 1 scaffold spec ready. |
+| prodcheck | active | First target. 5 issues, scheduled Mon–Fri 03:00 UTC. PR #6 open. |
 | nuuance | pending onboarding | Has mature governance already; needs workflow + label. |
 | dAIg | pending onboarding | Has mature governance already; awaiting Play Store review. |
 | HealthOS | pending onboarding | Needs housekeeping first (strategy review, backlog creation). |

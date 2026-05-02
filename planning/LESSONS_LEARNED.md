@@ -45,3 +45,27 @@
 - **Context**: Identified 6 agent personas by looking at which governance steps people skip under time pressure.
 - **Lesson**: The highest-value agents automate the steps humans are tempted to skip: session handoff, documentation sync, NFT audits, plan creation.
 - **Prevention**: When a governance step is consistently skipped, create an agent for it rather than adding more documentation.
+
+---
+
+## Session: Prodcheck Onboarding & First Live Run (2026-05-03)
+
+### 8. acceptEdits is insufficient for headless CI — use bypassPermissions
+- **Context**: Agent ran for $0.42 but made no commits. It wrote files via Write tool but couldn't run `git add` or `git commit` (Bash commands blocked in acceptEdits mode with no user to approve).
+- **Lesson**: `acceptEdits` only auto-approves file edits. Headless operation requires `bypassPermissions` for git, tests, and build tools. Security is enforced at the PAT level (no workflow scope).
+- **Prevention**: Always use `bypassPermissions` for headless/CI operation. Document the security rationale in the bounded-runaway mitigations table.
+
+### 9. Fine-grained PATs need Issues: Read & Write, not just Contents + PRs
+- **Context**: First live run hit 403 "Resource not accessible by personal access token" on `repo.get_issues()`. Second run hit same error on `issue.create_comment()`.
+- **Lesson**: The orchestrator reads issues (to select work) and writes comments (to link PRs). The PAT needs Issues: Read & Write on the target repo.
+- **Prevention**: README now documents the full permission matrix. Comment posting is wrapped in try/except as a safety net.
+
+### 10. Push protection will block commits containing secrets in git history
+- **Context**: `.specstory/` session history contained a GitHub PAT from a previous conversation. `git push` was blocked by GitHub Push Protection.
+- **Lesson**: Session history tools (SpecStory, etc.) can capture secrets that appear in conversation. These end up in git history if the directory is tracked.
+- **Prevention**: Add `.specstory/` to `.gitignore` immediately. If already in history, use `git filter-branch` to rewrite. Never track AI conversation logs in git.
+
+### 11. Wrap the SDK query loop in try/except — the agent may commit before failing
+- **Context**: Agent exited with code 1 after doing work. The SDK raised an exception, crashing the orchestrator before it could check for commits or create a PR.
+- **Lesson**: Claude Code may exit non-zero after completing useful work (e.g., a final tool call fails). The orchestrator should always check for commits regardless of exit code.
+- **Prevention**: The query loop is now wrapped in try/except. On error, log and continue to the commit-check/PR-creation phase.

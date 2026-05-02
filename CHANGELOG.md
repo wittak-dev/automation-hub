@@ -11,9 +11,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) conv
 - **Gold-standard governance template** (GOV-001) — full template set in `templates/governance/` including CLAUDE.md, BACKLOG.md, LESSONS_LEARNED.md, SERVICES.md, CHANGELOG.md, CLAUDE_NFT.md templates, .gitignore template, and onboarding README
 - **Six custom agent definitions** (GOV-001) — nft-auditor, session-handoff, pr-reviewer, plan-architect, onboard-project, doc-sync in `templates/governance/agents/`
 - **Automation-hub own governance** (GOV-001) — upgraded CLAUDE.md to full constitutional framework with SACRED workflow, decision matrix, session handoff protocol. Added `planning/` directory with BACKLOG.md, LESSONS_LEARNED.md, SERVICES.md
+- **Prodcheck onboarded** (ONBOARD-001) — first target repo live with 5 autonomous-dev issues, workflow active, first PR (#6) opened by agent
 
 ### Changed
 - **CLAUDE.md** — upgraded from minimal framework to full constitutional v1.0 with authority ladder, canary verification, Green/Yellow/Red decision matrix, SACRED workflow, session handoff, forbidden zone
+- **permission_mode** — switched from `acceptEdits` to `bypassPermissions` for headless CI operation
+- **README.md** — PAT permissions now include Issues: Read & Write
+
+### Fixed
+- **Agent SDK error handling** — query loop wrapped in try/except so orchestrator checks for commits even if agent exits non-zero
+- **Issue comment 403** — `create_comment()` now best-effort with try/except, won't crash the run
+- **`.specstory/` leak** — removed from git history (contained PAT), added to `.gitignore`
 
 ---
 

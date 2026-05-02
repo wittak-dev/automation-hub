@@ -216,9 +216,14 @@ tests/
 |-------|---------------|-------|
 | Agent turn limit | `ClaudeAgentOptions(max_turns=40)` in `autonomous_dev.py` | 40 turns |
 | Wall-clock limit | `timeout-minutes: 45` in `templates/workflow.yml` | 45 minutes |
+| Permission mode | `permission_mode="bypassPermissions"` in `autonomous_dev.py` | Full tool access |
+| PAT scope | Fine-grained PAT — no `workflow` scope | Cannot modify CI files |
 
-Both limits are deliberate. If either fires in practice, investigate before raising
-them — runaway is more likely than genuine need for more turns/time.
+All limits are deliberate. `bypassPermissions` is required for headless operation (the agent
+needs Bash for git, tests, and build tools). Security is enforced at the PAT level — omitting
+`workflow` scope ensures the agent cannot modify GitHub Actions configuration. If turn/time
+limits fire in practice, investigate before raising them — runaway is more likely than genuine
+need for more turns/time.
 
 ---
 

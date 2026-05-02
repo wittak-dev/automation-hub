@@ -98,7 +98,7 @@ async def run(args: argparse.Namespace) -> None:
     options = ClaudeAgentOptions(
         cwd=str(repo_dir),
         max_turns=40,
-        permission_mode="acceptEdits",
+        permission_mode="bypassPermissions",
         setting_sources=["project"],
     )
 

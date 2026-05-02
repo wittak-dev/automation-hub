@@ -1,0 +1,91 @@
+# [PROJECT_NAME] Feature Backlog
+
+**Last Updated**: [DATE] — [session summary]
+**Archive**: Completed sprint detail in `planning/BACKLOG_ARCHIVE.md`
+
+---
+
+## Current State
+
+| Dimension | Status |
+|-----------|--------|
+| Spec compliance | [X]% |
+| Live URL | [URL or N/A] |
+| Staging URL | [URL or N/A] |
+| Auth | [status] |
+| Payments | [status or N/A] |
+| Current version | [version] |
+| Open bugs | [count] |
+
+---
+
+## Next Up
+
+Active workstream — start here next session.
+
+- **[ITEM-ID]**: [What needs doing — enough detail to resume cold]
+- **[ITEM-ID]**: [Blocked on: X — what Chief needs to provide]
+
+---
+
+## Active Priority Order
+
+> Work top to bottom. Do not start a row until the one above it is shipped.
+
+| # | ID | What | Status |
+|---|-----|------|--------|
+| 1 | **[ID-001]** | [Description] | 🔴 NOT STARTED |
+| 2 | **[ID-002]** | [Description] | 🔴 NOT STARTED |
+
+---
+
+## Feature Detail
+
+<!-- One section per feature. Use this template: -->
+
+### [FEATURE-ID]: [Feature Name]
+**Status**: 🔴 NOT STARTED / 🚧 IN PROGRESS / ✅ SHIPPED
+**Priority**: HIGH / MEDIUM / LOW
+**Blocked on**: [what + who, or "nothing"]
+**Effort**: ~[estimate]
+
+**Acceptance Criteria:**
+- [ ] [Criterion 1]
+- [ ] [Criterion 2]
+
+**Tasks:**
+- [ ] [Task 1]
+- [ ] [Task 2]
+
+---
+
+## Completed
+
+<!-- Move shipped items here with date and commit hash -->
+
+| ID | What | Shipped | Commit |
+|----|------|---------|--------|
+| [ID] | [Description] | [YYYY-MM-DD] | `[hash]` |
+
+---
+
+## Open Bugs
+
+<!-- Use this template:
+### 🔴 BUG-001 — [Title] (OPEN)
+- **Symptom**: [what the user sees]
+- **Root cause**: [technical explanation]
+- **File**: [affected files]
+-->
+
+No open bugs.
+
+---
+
+## Status Legend
+
+- 🔴 NOT STARTED
+- 🚧 IN PROGRESS
+- ✅ SHIPPED (YYYY-MM-DD)
+- 🟡 BLOCKED (reason in notes)
+- ~~PARKED~~ (reason in notes, see Lesson #N)

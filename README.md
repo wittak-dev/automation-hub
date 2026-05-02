@@ -34,9 +34,25 @@ In the target repo, go to **Settings → Secrets and variables → Actions** and
 
 Copy `templates/workflow.yml` from this repo into the target repo at `.github/workflows/autonomous-dev.yml`. No substitution is required — `${{ github.repository }}` resolves automatically to the host repo's slug at runtime.
 
-### 4. Add a `CLAUDE.md` constitutional framework
+### 4. Apply the governance framework
 
-Copy `templates/CLAUDE.md.template` to the target repo root as `CLAUDE.md`. Fill in the project description, tech stack, test commands, and any areas the agent should not touch.
+The full governance template is at `templates/governance/` with its own [onboarding guide](templates/governance/README.md). At minimum:
+
+```bash
+# From the automation-hub repo root:
+cp templates/governance/CLAUDE.md.template /path/to/target/CLAUDE.md
+mkdir -p /path/to/target/{planning/plans,docs/constitution,.claude/agents}
+cp templates/governance/BACKLOG.md.template /path/to/target/planning/BACKLOG.md
+cp templates/governance/LESSONS_LEARNED.md.template /path/to/target/planning/LESSONS_LEARNED.md
+cp templates/governance/SERVICES.md.template /path/to/target/planning/SERVICES.md
+cp templates/governance/CHANGELOG.md.template /path/to/target/CHANGELOG.md
+cp templates/governance/CLAUDE_NFT.md.template /path/to/target/docs/constitution/CLAUDE_NFT.md
+cp templates/governance/agents/*.md /path/to/target/.claude/agents/
+```
+
+Then customise `CLAUDE.md` — fill in the project description, tech stack, test commands, core principles, decision matrix, and forbidden zone. See the [governance README](templates/governance/README.md) for the full guide.
+
+The governance framework includes 6 custom agent definitions (NFT auditor, session handoff, PR reviewer, plan architect, onboard project, doc sync) that automate the governance steps most often skipped under time pressure.
 
 ### 5. Create a smoke-test issue
 
@@ -81,12 +97,12 @@ Delete the `.github/workflows/autonomous-dev.yml` file from the target repo and 
 
 ## Supported target repos
 
-| Repo | Status |
-|------|--------|
-| nuuance | pending onboarding |
-| dAIg | pending onboarding |
-| HealthOS | pending onboarding |
-| prodcheck | pending onboarding |
+| Repo | Status | Notes |
+|------|--------|-------|
+| prodcheck | governance applied, pending git init + workflow | First target. Week 1 scaffold spec ready. |
+| nuuance | pending onboarding | Has mature governance already; needs workflow + label. |
+| dAIg | pending onboarding | Has mature governance already; awaiting Play Store review. |
+| HealthOS | pending onboarding | Needs housekeeping first (strategy review, backlog creation). |
 
 **Status legend:** `active` — scheduled runs enabled and verified; `paused` — workflow disabled, integration intact; `pending onboarding` — not yet set up.
 

@@ -1,0 +1,36 @@
+# === Dependencies ===
+node_modules/
+venv/
+__pycache__/
+*.pyc
+
+# === Build output ===
+dist/
+build/
+*.egg-info/
+
+# === Environment & secrets ===
+.env
+.env.local
+.env.*
+!.env.example
+
+# === IDE & tool-generated ===
+.DS_Store
+*.log
+.vscode/
+.idea/
+.specstory/
+
+# === Claude Code ===
+.claude/worktrees/
+.claude/settings.local.json
+
+# === Active planning (local-only, contains sensitive planning info) ===
+# Historical records (CHANGELOG.md, LESSONS_LEARNED.md, SERVICES.md) ARE committed.
+# planning/BACKLOG.md
+# planning/STRATEGY.md
+# admin_instructions.md
+
+# === Project-specific ===
+# TODO: Add project-specific ignores below

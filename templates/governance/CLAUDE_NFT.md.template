@@ -1,0 +1,148 @@
+# CLAUDE_NFT.md — Non-Functional Testing Module
+
+*Part of: CLAUDE.md Constitution*
+*Load when: new dependency added, pre-release, monthly audit, new API route/endpoint*
+*Module Authority: Subordinate to main CLAUDE.md. Cannot override core rules.*
+
+**Announce when loading:** "Loading @CLAUDE_NFT.md for [reason]"
+
+---
+
+## 1. Trigger Table
+
+| Event | Mandatory Activities |
+|-------|---------------------|
+| **New npm/pip dependency** | S1 (dependency scan) immediately |
+| **New API route or endpoint** | S3 (OWASP spot-check for that route) |
+| **Pre-release** | All: S1, S2, S3, S4, P1, PR1, R1 |
+| **Monthly (or per-sprint)** | S1, S3 (sample), P1, PR1 |
+| **Post-incident** | Targeted audit of affected domain |
+
+---
+
+## 2. Security
+
+### S1: Dependency Scanning
+
+```bash
+# For Node.js projects:
+npm audit --json
+# For Python projects:
+pip-audit
+# For both: check https://osv.dev for additional coverage
+```
+
+**Triage protocol:**
+
+| Severity | Scope | Action |
+|----------|-------|--------|
+| Critical/High | Direct dependency | Fix immediately — block release |
+| Critical/High | Transitive, exploitable | Fix this session if path exists |
+| Critical/High | Transitive, not exploitable | Log, schedule fix, do not block |
+| Moderate | Any | Log, fix if trivial, otherwise backlog |
+| Low | Any | Log only |
+
+### S2: OWASP Top 10 Spot-Check
+
+For each new route or endpoint, verify:
+
+- [ ] **Injection**: All user input parameterised (no string concatenation in queries)
+- [ ] **Broken Auth**: Session/auth check before any data mutation
+- [ ] **Sensitive Data Exposure**: No secrets in responses, logs, or client bundle
+- [ ] **XXE / Parsing**: No unsafe XML/JSON parsing of user input
+- [ ] **Broken Access Control**: Role/ownership verified before data access
+- [ ] **Security Misconfiguration**: Appropriate headers (CORS, CSP, HSTS)
+- [ ] **XSS**: No unsanitised user input in HTML output
+- [ ] **Insecure Deserialisation**: No `eval()`, `pickle.loads()`, or equivalent on user data
+- [ ] **Known Vulnerabilities**: Dependencies scanned (S1)
+- [ ] **Insufficient Logging**: Security-relevant events logged (auth failures, permission denials)
+
+### S3: CSP Headers Review
+<!-- TODO: Add project-specific Content-Security-Policy requirements -->
+
+### S4: Client Bundle Secrets Check
+
+```bash
+# Verify no secrets leaked into the client bundle:
+# For Next.js: grep for NEXT_PUBLIC_ vars that shouldn't be public
+# For Vite: grep for VITE_ vars that shouldn't be public
+# General: search dist/ or build/ for API key patterns (sk-, ghp_, AKIA, etc.)
+```
+
+---
+
+## 3. Performance
+
+### P1: Lighthouse / Performance Baselines
+
+<!-- TODO: Set project-appropriate thresholds -->
+
+| Metric | Floor (block release) | Target |
+|--------|----------------------|--------|
+| Performance | ≥ 70 | ≥ 90 |
+| Accessibility | ≥ 90 | 100 |
+| Best Practices | ≥ 80 | ≥ 95 |
+| SEO | ≥ 80 | ≥ 95 |
+
+### P2: Bundle Size Monitoring
+
+Track bundle size over time. Flag any single-commit increase > 50KB unexplained.
+
+### P3: Response Time Standards
+
+<!-- TODO: Set project-appropriate latency targets -->
+
+| Endpoint type | p95 target |
+|---------------|-----------|
+| API read | < 200ms |
+| API write | < 500ms |
+| Page load (LCP) | < 2.5s |
+
+---
+
+## 4. Privacy & Compliance
+
+### PR1: Privacy Spot-Check
+
+- [ ] No unnecessary personal data collected
+- [ ] Data stored is the minimum needed for the feature
+- [ ] No personal data in logs (passwords, tokens, PII)
+- [ ] Data export/deletion capability exists (GDPR Article 17)
+- [ ] Privacy policy reflects actual data processing
+
+### PR2: Data Classification
+
+<!-- TODO: Classify this project's data -->
+
+| Data type | Classification | Storage | Retention |
+|-----------|---------------|---------|-----------|
+| [Type] | [Public/Internal/Confidential/Restricted] | [Where] | [How long] |
+
+---
+
+## 5. Reliability
+
+### R1: Critical Flow Verification
+
+<!-- TODO: List the project's critical paths that must be tested pre-release -->
+
+- [ ] [Critical flow 1, e.g. "User registration → email verification → login"]
+- [ ] [Critical flow 2, e.g. "Payment → subscription activation → feature access"]
+
+### R2: Error Handling Verification
+
+- [ ] All external API calls have timeout and error handling
+- [ ] Graceful degradation when third-party services are down
+- [ ] User-facing error messages are helpful, not technical
+
+---
+
+## 6. NFT Run Record
+
+| Date | Trigger | Activities | Findings | Action | Commit |
+|------|---------|-----------|----------|--------|--------|
+| | | | | | |
+
+---
+
+*Template version: 1.0. Derived from nuuance and dAIg NFT governance patterns.*

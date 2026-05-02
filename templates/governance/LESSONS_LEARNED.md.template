@@ -1,0 +1,32 @@
+# Lessons Learned — [PROJECT_NAME]
+
+*Update at the end of every session. Format: numbered, titled, with Context / Lesson / Prevention.*
+*Cross-reference with CLAUDE.md Key Patterns — any pattern noted there should have a corresponding lesson here.*
+*When this file exceeds ~80 lessons, move older entries to `LESSONS_LEARNED_ARCHIVE.md`.*
+
+---
+
+## How to Use This Document
+
+- Lessons are numbered **globally** across all sessions (never reset).
+- Each lesson has three required fields: **Context**, **Lesson**, **Prevention**.
+- Reference lessons by number elsewhere (e.g. "See Lesson #12" in BACKLOG.md or CLAUDE.md).
+- Lessons that become recurring rules should be **promoted** to CLAUDE.md or a constitutional module.
+
+---
+
+## Session: [Feature/Task ID] — [Description] (YYYY-MM-DD)
+
+### 1. [Short, descriptive title — statement of the lesson]
+- **Context**: [What happened — the specific scenario that triggered this lesson]
+- **Lesson**: [The generalised principle extracted from the incident]
+- **Prevention**: [Concrete action to avoid recurrence — a code pattern, a pre-check, or a constitution update]
+
+<!-- Continue numbering sequentially:
+
+### 2. [Title]
+- **Context**: ...
+- **Lesson**: ...
+- **Prevention**: ...
+
+-->

@@ -1,0 +1,344 @@
+# CLAUDE.md — Development Constitution v1.0
+
+<!-- TEMPLATE INSTRUCTIONS:
+     Replace all [PLACEHOLDER] values with project-specific content.
+     Delete this comment block once customised.
+     See templates/governance/README.md for the full onboarding guide. -->
+
+## Constitutional Authority & Commitment
+
+### Supreme Directive
+
+ALL instructions within this CLAUDE.md document MUST BE FOLLOWED. They are NON-NEGOTIABLE
+and OVERRIDE any default behaviour. This document is the supreme governing document for all
+development work on this project.
+
+### Instruction Hierarchy (Absolute Order of Precedence)
+
+```
+1. DIRECT USER INSTRUCTIONS          (Highest — live conversation overrides)
+2. THIS CONSTITUTION (CLAUDE.md)     (Supreme governing document)
+3. MODULAR EXTENSIONS                (Load on demand — inherit all core rules)
+4. PROJECT DOCUMENTATION             (Specs, architecture, planning docs)
+5. AI BASE TRAINING                  (Lowest — overridden by everything above)
+```
+
+### Canary Verification
+
+**Always address the user as "Chief" to confirm this document was loaded.**
+If you do not address the user as "Chief", you have not loaded the constitution.
+
+---
+
+## Quick Command Reference
+
+<!-- TODO: Replace with this project's actual commands -->
+```bash
+# Build
+[BUILD_COMMAND]
+
+# Test
+[TEST_COMMAND]
+
+# Lint / Format
+[LINT_COMMAND]
+[FORMAT_COMMAND]
+
+# Dev server
+[DEV_COMMAND]
+```
+
+---
+
+## Module Loading System
+
+### Core Constitution (Always Loaded)
+This file. Contains all non-negotiable rules and workflows.
+
+### Modular Extensions (Load on Demand)
+
+<!-- TODO: Add project-specific modules as the project grows.
+     Common modules: DEPLOYMENT, DATABASE, PAYMENTS, AI_INTEGRATION, DEBUGGING, TESTING, NFT.
+     Use this format:
+
+     @docs/constitution/CLAUDE_DEPLOYMENT.md
+       Load for:     deployment, infrastructure, env vars, DNS, rollbacks
+       Co-load with: + CLAUDE_DATABASE.md when deploying schema changes
+       Do not load:  for UI-only changes
+
+     Announce when loading: "Loading @CLAUDE_DEPLOYMENT.md for [reason]"
+-->
+
+No modular extensions yet. Create them in `docs/constitution/` as the project grows.
+Each module inherits all rules from this core constitution and cannot override it.
+
+---
+
+## Agent Decision Matrix
+
+### GREEN ZONE — Execute Independently
+- UI component creation and modification
+- Unit tests and test utilities
+- Documentation updates (planning docs, README, comments)
+- Code formatting and linting fixes
+- Bug fixes that do not affect core logic, auth, or data
+- CSS / styling improvements
+- Minor copy and text changes
+
+### YELLOW ZONE — Implement Then Review
+- New API endpoints or routes
+- Database schema changes
+- AI prompt modifications
+- State management changes
+- New feature components
+- Package / dependency updates
+- Performance optimisations
+- External API integrations
+
+### RED ZONE — Ask Chief First (ALWAYS)
+- Changes to core business logic
+- Authentication or authorisation logic
+- Production database migrations
+- Production environment variable changes
+- Production deployment configuration
+- Major architectural decisions
+- Domain / DNS configuration
+- Any change that could affect data integrity or security
+- CI/CD pipeline modifications
+
+---
+
+## Core Principles
+
+<!-- TODO: Replace with 2-4 project-specific non-negotiable principles.
+     Express each as an "Article" with FORBIDDEN and CORRECT code examples.
+     Example:
+
+     ### ARTICLE I: [Principle Name]
+     [Why this matters — 1-2 sentences]
+
+     ```ts
+     // ❌ FORBIDDEN
+     [bad pattern]
+
+     // ✅ CORRECT
+     [good pattern]
+     ```
+-->
+
+### ARTICLE I: [PRIMARY PRINCIPLE]
+[Description of the most important non-negotiable rule for this project.]
+
+### ARTICLE II: [SECONDARY PRINCIPLE]
+[Description of the second most important non-negotiable rule.]
+
+### ARTICLE III: Data Privacy & Security
+- Minimal data collection — only store what the application needs.
+- Credentials and secrets NEVER in code or config files — environment variables only.
+- Passwords NEVER stored in plain text.
+- API keys NEVER exposed to the client bundle.
+
+---
+
+## Plan Mode Protocol (Mandatory for 3+ Files)
+
+Any change affecting 3 or more files MUST go through Plan Mode.
+
+### Phase 1: Specification Review
+
+```
+Task: [Describe task]
+
+Acceptance Criteria (from spec):
+- Criterion 1: [exact text]
+- Criterion 2: [exact text]
+
+Current Status:
+- ✅ Already delivered: [list]
+- ❌ Missing: [list]
+- ⚠️ Partial: [list]
+
+Files Affected: [list with reason for each]
+
+Privacy Impact: [YES/NO]
+Architecture Impact: [YES/NO]
+
+Risk Assessment:
+- Could break: [list]
+- Mitigation: [testing strategy]
+```
+
+### Phase 2: Approval Checkpoint
+Present the plan to Chief. **WAIT for approval before proceeding.**
+
+### Phase 2B: Save Plan File (MANDATORY before creating branch)
+Save to: `planning/plans/YYYY-MM-DD_<task-name>.md`
+Include: full planning block, date approved, outcome field (to fill in later), progress tracker.
+**DO NOT create a branch until this file is saved.**
+
+### Phase 3: Implementation
+Execute the approved plan. Follow the SACRED Workflow for every commit.
+
+### Phase 4: Verification
+Review each acceptance criterion: ✅ met / ⚠️ partial / ❌ not met — with evidence.
+Build, lint, and tests must pass.
+
+---
+
+## The SACRED Workflow
+
+Every code change follows these steps. **Never skip a step.**
+
+```
+ 1. SPEC CHECK     — Read current spec / acceptance criteria
+ 2. BRANCH         — Feature branch BEFORE writing code
+ 3. PLAN           — Plan Mode if 3+ files affected
+ 4. IMPLEMENT      — Only what's needed for acceptance criteria
+ 5. FORMAT         — [FORMAT_COMMAND]
+ 6. LINT           — [LINT_COMMAND]
+ 7. BUILD          — [BUILD_COMMAND] must succeed
+ 8. TEST           — [TEST_COMMAND] + manual verification
+ 9. AUDIT          — Privacy / security spot-check (if applicable)
+10. VERIFY         — Return to spec, mark each criterion ✅ ⚠️ ❌
+10.5 NFT CHECK     — When triggered (new dep, pre-release, new route)
+11. COMMIT         — Only after full verification
+12. UPDATE DOCS    — MANDATORY immediate post-commit (see below)
+```
+
+### Step 12: Post-Commit Documentation Updates (Non-Negotiable)
+
+After every commit, **immediately** update these files (or explicitly confirm "unchanged"):
+
+a) **planning/BACKLOG.md** — Update item status, mark acceptance criteria, note commit hash
+b) **planning/LESSONS_LEARNED.md** — Add any new lessons (or confirm "none this session")
+c) **CHANGELOG.md** — Entry under `[Unreleased]` for every feature/fix/security change
+d) **planning/SERVICES.md** — If any new external service or tier change
+e) **README.md** — If any user-facing features or setup changed
+f) **MEMORY.md** — Sync with current state, update "Next Up"
+
+---
+
+## Session Handoff Protocol (MANDATORY before /clear)
+
+At the end of EVERY session, complete these steps:
+
+1. Update `## Next Up` section in BACKLOG.md (single source of truth for resuming cold)
+2. Format: `- **[ITEM-ID]**: [enough detail to resume cold]`
+3. Mark next planned item as 🚧 IN PROGRESS
+4. Update `planning/LESSONS_LEARNED.md` — add any new lessons (or confirm "none this session")
+5. Update `CHANGELOG.md` — entry under `[Unreleased]` (or confirm "none this session")
+6. Update `README.md` — if any user-facing changes (or confirm "unchanged")
+7. Update `planning/SERVICES.md` — if any new service or tier change (or confirm "unchanged")
+8. Update `MEMORY.md` — sync "Next Up" and any new patterns; remove stale entries
+9. Craft next-session kickoff prompt — ready-to-paste message for Chief
+10. Push to remote — `git push origin [branch]` if any commits this session
+11. Exit with `/clear`
+
+---
+
+## Completion Checklist (Before Claiming "Done")
+
+### Code Quality
+- [ ] Build passes (`[BUILD_COMMAND]`)
+- [ ] Linting passes (`[LINT_COMMAND]`)
+- [ ] Formatting applied (`[FORMAT_COMMAND]`)
+- [ ] No `console.log` or debug statements left in production code
+- [ ] Tests exist for new functionality
+
+### Security
+- [ ] No secrets in code or config files
+- [ ] No API keys exposed to client bundle
+- [ ] Input validation at system boundaries
+
+### Specification
+- [ ] ALL acceptance criteria reviewed
+- [ ] Each criterion marked ✅ ⚠️ ❌ with evidence
+- [ ] Never claimed complete without explicit verification
+
+### Documentation
+- [ ] BACKLOG.md updated
+- [ ] CHANGELOG.md updated
+- [ ] LESSONS_LEARNED.md updated (or confirmed "none")
+- [ ] SERVICES.md updated (if applicable)
+
+### Session Close-Out
+- [ ] Session handoff protocol completed
+- [ ] MEMORY.md synced
+
+---
+
+## Architecture Overview
+
+<!-- TODO: Replace with project-specific architecture -->
+
+### Tech Stack (Locked)
+
+| Layer | Technology |
+|-------|-----------|
+| Language | [LANGUAGE] |
+| Framework | [FRAMEWORK] |
+| Database | [DATABASE] |
+| Test runner | [TEST_FRAMEWORK] |
+| Formatter | [FORMATTER] |
+| Linter | [LINTER] |
+
+### Directory Structure
+
+<!-- TODO: Replace with actual directory structure -->
+```
+project/
+├── CLAUDE.md                    # This constitution
+├── CHANGELOG.md                 # Development changelog
+├── README.md                    # Project overview
+├── planning/
+│   ├── BACKLOG.md               # Active feature backlog
+│   ├── LESSONS_LEARNED.md       # Hard-won knowledge base
+│   ├── SERVICES.md              # External services registry
+│   └── plans/                   # Archived plan-mode outputs
+├── docs/
+│   ├── specifications/          # Product specs with acceptance criteria
+│   └── constitution/            # Modular CLAUDE_*.md extensions
+├── .claude/
+│   └── agents/                  # Custom agent definitions
+└── [SOURCE_DIRS]/               # Application source code
+```
+
+---
+
+## The Forbidden Zone
+
+### Never Touch Without Permission (RED ZONE)
+<!-- TODO: List project-specific critical files -->
+- `[CRITICAL_FILE_1]` — [why]
+- `[CRITICAL_FILE_2]` — [why]
+- `.env`, `.env.*` — secrets
+- CI/CD configuration files
+
+### Never Implement
+```
+// ❌ FORBIDDEN — Hardcoded secrets
+const API_KEY = 'sk-...'
+
+// ❌ FORBIDDEN — Deleting files permanently
+rm -rf [anything]     // Use ~/_ToDelete/ instead
+
+// ❌ FORBIDDEN — Pushing directly to main
+git push origin main  // Always use feature branches
+```
+
+---
+
+## Git Workflow
+
+- Feature branches from `main`; PR to merge back.
+- **Never commit directly to main.**
+- Staging deployment as a gate before main merge (when applicable).
+- `.gitignore` must be set BEFORE the first commit.
+- Active planning docs (BACKLOG.md, STRATEGY.md) may be gitignored — they contain sensitive planning info.
+- Historical records (CHANGELOG.md, LESSONS_LEARNED.md, SERVICES.md) are committed.
+
+---
+
+## Version History
+
+*v1.0 — Initial constitution. Created from automation-hub governance template.*

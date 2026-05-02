@@ -1,0 +1,26 @@
+# Changelog — [PROJECT_NAME]
+
+All notable changes to this project are documented here.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) conventions.
+
+---
+
+## [Unreleased]
+
+<!-- Add entries here as work is committed. Promote to a versioned section on release.
+     Categories: Added, Changed, Fixed, Security, Removed
+     Format: **Bold lead-in** (ITEM-ID, `commit-hash`) — plain English description -->
+
+---
+
+## [0.1.0] — [Release name] (YYYY-MM-DD)
+
+### Added
+- **Initial project scaffold** — [description of what was set up]
+
+---
+
+<!-- Comparison links (update on each release):
+[Unreleased]: https://github.com/[OWNER]/[REPO]/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/[OWNER]/[REPO]/releases/tag/v0.1.0
+-->

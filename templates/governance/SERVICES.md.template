@@ -1,0 +1,51 @@
+# [PROJECT_NAME] Services Registry
+
+**Last updated**: [DATE] ([what changed])
+**Rule**: Update this file whenever a new external service is added or an existing plan/tier changes — same session, before commit. Consult before any billing or tooling decision.
+
+---
+
+## How to Use This Document
+
+- Every external service the project depends on has an entry below.
+- **Env var(s)** lists variable names only — NEVER values. Values live in the environment or password manager.
+- **Scale trigger** describes the specific condition that should prompt a review or upgrade.
+- Review this document before adding any new service to check for overlap.
+
+---
+
+<!-- Use one section per category. Common categories:
+     Hosting & Infrastructure, Database, Authentication, Payments,
+     AI / ML, Email, Domain & DNS, Monitoring, Development Tools -->
+
+## [Category Name]
+
+### [Service Name]
+
+| Field | Value |
+|-------|-------|
+| Plan | [Current plan/tier] |
+| Cost | [Current cost, e.g. "Free tier" or "£X/month"] |
+| Purpose | [What it does in THIS project — be specific, not generic] |
+| Scale trigger | [Specific condition prompting review, e.g. "Approaching 500MB storage limit"] |
+| Env var(s) | `[VAR_NAME_1]`, `[VAR_NAME_2]` |
+| Notes | [Quirks, shared keys, billing notes, lessons learned] |
+
+---
+
+<!-- Repeat for each service. Example:
+
+## AI / Machine Learning
+
+### Anthropic (Claude API)
+
+| Field | Value |
+|-------|-------|
+| Plan | Pay-as-you-go |
+| Cost | ~£X/month at current usage |
+| Purpose | Powers [specific feature]. Model pinned to claude-sonnet-4-6. Server-side only. |
+| Scale trigger | Monthly spend exceeding £X or response latency > Xs at p95 |
+| Env var(s) | `ANTHROPIC_API_KEY` |
+| Notes | Budget cap set in Anthropic console. Costs logged per request. |
+
+-->

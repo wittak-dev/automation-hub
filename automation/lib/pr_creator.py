@@ -1,10 +1,13 @@
 """Push the agent's branch and open a GitHub PR."""
 
+import logging
 import subprocess
 from pathlib import Path
 
 from github import Github
 from github.Issue import Issue
+
+log = logging.getLogger(__name__)
 
 BRANCH_PREFIX = "autonomous/issue-"
 
@@ -30,8 +33,12 @@ def create(gh: Github, repo_name: str, issue: Issue, repo_dir: Path) -> str:
         base=gh_repo.default_branch,
     )
 
-    # Post a comment on the original issue linking the PR
-    issue.create_comment(f"Autonomous development complete. PR opened: {pr.html_url}")
+    # Post a comment on the original issue linking the PR (best-effort —
+    # the PAT may lack Issues: Write permission)
+    try:
+        issue.create_comment(f"Autonomous development complete. PR opened: {pr.html_url}")
+    except Exception as exc:
+        log.warning("Could not comment on issue #%d: %s", issue.number, exc)
 
     return pr.html_url
 

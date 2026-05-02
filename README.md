@@ -26,7 +26,7 @@ In the target repo, go to **Settings → Secrets and variables → Actions** and
 | Resource | Access |
 |----------|--------|
 | `wittak-dev/automation-hub` | Contents: Read |
-| `OWNER/target-repo` | Contents: Read & Write, Issues: Read, Pull requests: Read & Write |
+| `OWNER/target-repo` | Contents: Read & Write, Issues: Read & Write, Pull requests: Read & Write |
 
 > **Omit the `workflow` scope.** A fine-grained PAT without workflow permissions cannot modify `.github/workflows/` files, which is the correct safe default — the agent has no business touching CI configuration. Only add workflow write access if you explicitly want the agent to be able to modify workflow files.
 

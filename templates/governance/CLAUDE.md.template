@@ -339,6 +339,12 @@ git push origin main  // Always use feature branches
 
 ---
 
+## Agentic Team Protocol
+
+Load `@docs/constitution/CLAUDE_AGENTIC.md` when running a multi-agent team (Lead + specialist sub-agents). That module defines workspace setup, the tmux send-keys launch pattern, sub-agent permission model, escalation protocols, and merge authority.
+
+---
+
 ## Version History
 
 *v1.0 — Initial constitution. Created from automation-hub governance template.*

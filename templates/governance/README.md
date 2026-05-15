@@ -10,6 +10,7 @@ production projects (nuuance, dAIg) over a year of iterative refinement.
 | File | Purpose | Commit to git? |
 |------|---------|---------------|
 | `CLAUDE.md.template` | Constitutional framework — the supreme governing document | Yes |
+| `CLAUDE_AGENTIC.md.template` | Agentic team governance module (optional — multi-agent projects) | Yes |
 | `BACKLOG.md.template` | Product backlog with priority ordering and session handoff | Your choice* |
 | `LESSONS_LEARNED.md.template` | Hard-won knowledge base (numbered, Context/Lesson/Prevention) | Yes |
 | `SERVICES.md.template` | External services registry (plan, cost, scale triggers) | Yes |
@@ -130,5 +131,24 @@ The system is built on five pillars:
 
 ---
 
-*Template version: 1.0 — May 2026*
-*Derived from nuuance (WhatsApp Analyser) and dAIg governance patterns.*
+---
+
+## Agentic team setup
+
+When a project uses a multi-agent team (Lead + specialist sub-agents), two additional files are required beyond the base governance files:
+
+1. **`docs/constitution/CLAUDE_AGENTIC.md`** — copy and customise from `CLAUDE_AGENTIC.md.template`. Defines workspace setup (tmux send-keys pattern), sub-agent permission model, Lead authority, escalation protocol, checkpoint format, and failure mode recovery. The core `CLAUDE.md` contains only a one-line module reference — full protocol lives here.
+
+2. **`.claude/settings.local.json` allowlist** — a machine-local permissions file (gitignored) that backs `--permission-mode auto` for sub-agents. Without it, auto mode has nothing to pre-approve and sub-agents prompt on routine operations. The `onboard-project` agent creates a starter allowlist; extend it with project-specific build/test commands.
+
+**Permission model summary:**
+- Sub-agents: `claude --permission-mode auto` — allowlist pre-approves routine ops; anything novel surfaces to Team Lead
+- `--dangerously-skip-permissions`: Chief-only, full-scope verification required before use
+- Plain `claude` (no flags): wrong for agentic sessions — stalls on every unlisted call
+
+---
+
+*Template version: 1.2 — May 2026*
+*v1.0: Derived from nuuance (WhatsApp Analyser) and dAIg governance patterns.*
+*v1.1: Agentic Team Protocol added to CLAUDE.md.template. settings.local.json allowlist added to onboard-project agent. Permission model (`--permission-mode auto`) standardised across HealthOS, prodcheck, and this template.*
+*v1.2: CLAUDE_AGENTIC.md.template extracted as a standalone module. Core CLAUDE.md.template slimmed to a one-line reference. onboard-project agent updated with optional agentic file list. README updated.*

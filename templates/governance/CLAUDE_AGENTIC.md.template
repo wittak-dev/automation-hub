@@ -1,0 +1,370 @@
+# CLAUDE_AGENTIC.md — Agentic Team Governance Module
+
+<!-- TEMPLATE INSTRUCTIONS:
+     Replace all [PLACEHOLDER] values with project-specific content.
+     Delete this comment block once customised.
+     See templates/governance/README.md for the full onboarding guide.
+     Load when: spawning or coordinating a multi-agent team. -->
+
+*Constitutional module for multi-agent orchestration on [PROJECT_NAME]*
+
+**Module Version**: 1.0
+**Parent Constitution**: CLAUDE.md
+**Authority**: Inherits all rules from the core constitution. CANNOT override it.
+**Load when**: Spawning or coordinating an agentic team (Lead + sub-agents).
+
+---
+
+## Purpose
+
+This module defines the checks, balances, and operating rules for [PROJECT_NAME] agentic teams — multiple Claude agents working in parallel on the codebase under a Lead Dev/Architect, with Chief as the final authority.
+
+Without this module, individual agents follow the core constitution's Agent Decision Matrix (GREEN/YELLOW/RED). This module extends that matrix with:
+- A Lead agent role and its bounded authority
+- Escalation protocols
+- Inter-agent coordination rules
+- Safeguards against cascading errors
+- Failure mode recovery procedures
+
+---
+
+## Workspace Setup Protocol (MANDATORY before spawning any sub-agent)
+
+Chief must be able to watch every sub-agent in real time. This requires sub-agents to be launched **inside tmux panes via `tmux send-keys`**, not via the Agent tool. The Agent tool runs agents as background tasks with no tmux presence — Chief cannot observe them.
+
+### §0. Pre-Flight Checklist
+
+Before spawning any agents, lead-dev MUST:
+
+1. Confirm the active tmux session name (e.g. `[PROJECT_SLUG]`).
+2. Create the required panes.
+3. Set up git worktrees for each sub-agent.
+4. Launch each sub-agent into its pane via `tmux send-keys`.
+5. Brief each sub-agent via `tmux send-keys` after it starts.
+
+### §0.1 Pane Layout (2 sub-agents)
+
+```bash
+# Step 1 — create panes (run from lead-dev's pane, session name e.g. "[PROJECT_SLUG]")
+tmux split-window -h -t [SESSION]           # right pane: sub-agent-1
+tmux split-window -v -t [SESSION]:0.1       # splits right into top/bottom: sub-agent-2
+
+# Step 2 — create isolated git worktrees
+git -C [PROJECT_ROOT] worktree add .worktrees/[agent-1-name] -b [branch-1]
+git -C [PROJECT_ROOT] worktree add .worktrees/[agent-2-name] -b [branch-2]
+
+# Step 3 — launch agents into their panes (THIS is what makes activity visible to Chief)
+tmux send-keys -t [SESSION]:0.1 "cd [PROJECT_ROOT]/.worktrees/[agent-1-name] && claude --permission-mode auto" Enter
+tmux send-keys -t [SESSION]:0.2 "cd [PROJECT_ROOT]/.worktrees/[agent-2-name] && claude --permission-mode auto" Enter
+
+# Step 4 — wait ~5s for agents to start, then send briefs
+sleep 5
+tmux send-keys -t [SESSION]:0.1 "[agent-1 brief]" Enter
+tmux send-keys -t [SESSION]:0.2 "[agent-2 brief]" Enter
+```
+
+For 3 sub-agents, add a third pane:
+```bash
+tmux split-window -v -t [SESSION]:0.2       # splits bottom-right again
+git -C [PROJECT_ROOT] worktree add .worktrees/[agent-3-name] -b [branch-3]
+tmux send-keys -t [SESSION]:0.3 "cd [PROJECT_ROOT]/.worktrees/[agent-3-name] && claude --permission-mode auto" Enter
+```
+
+### §0.2 Agent Brief Format (sent via tmux send-keys)
+
+Each brief sent to a sub-agent pane must include:
+
+```
+You are [agent-role] on the [PROJECT_NAME] agentic team.
+Lead-dev is your only contact — do NOT message Chief directly.
+Your worktree: [absolute path to worktree]
+Your branch: [branch-name]
+
+Constitution: read CLAUDE.md in your worktree before starting.
+RED ZONE files (never touch): [LIST_RED_ZONE_FILES_AND_DIRS]
+
+Your tasks:
+- [TASK-ID]: [description] [ZONE]
+
+Hard rules:
+- NEVER push to main
+- ALWAYS follow SACRED Workflow for every commit
+- [ADD_PROJECT_SPECIFIC_RULES]
+
+When done, output your report in this pane. Lead-dev will collect it.
+```
+
+### §0.3 Sub-Agent Permission Mode
+
+Sub-agents are launched with `--permission-mode auto`:
+
+```bash
+tmux send-keys -t [SESSION]:0.1 "cd [PROJECT_ROOT]/.worktrees/[agent-name] && claude --permission-mode auto" Enter
+```
+
+**Why `--permission-mode auto`:**
+- Auto mode approves operations that match the project's settings allowlist (`.claude/settings.local.json`) without prompting. This covers all routine GREEN ZONE operations: file reads, bash commands, git operations, tests, linting, formatting.
+- Operations NOT on the allowlist still surface for approval. Anything novel or potentially destructive gets a prompt — the Lead reviews it, not Chief.
+- The Lead acts as the approval layer for sub-agent work. Chief's time is not spent approving every `Read` call.
+
+**Why NOT `--dangerously-skip-permissions`:**
+- Bypasses ALL permission checks with no exceptions — including RED ZONE files. Removes the harness as any kind of safety net.
+- FORBIDDEN for sub-agents. May only be used by Chief, and only when Chief has independently verified the full scope of actions the session will take.
+
+**Why NOT plain `claude` (no flags):**
+- Standard mode prompts on every unlisted tool call. Sub-agents stall constantly on routine operations, requiring Chief to approve things the Lead is already authorised to approve. The agentic model breaks.
+
+**The allowlist is Chief's standing pre-approval.** The `.claude/settings.local.json` allowlist covers the routine operation set for this project. Adding an operation to the allowlist is the correct way to extend sub-agent authority — not escalating to `--dangerously-skip-permissions`.
+
+**RED ZONE defence:** RED ZONE file paths are not on the allowlist. Any sub-agent attempt to touch them will surface as an unapproved operation in auto mode — the Lead catches it before it reaches Chief.
+
+### §0.4 Why NOT the Agent Tool for Observable Work
+
+The Agent tool (`Agent(...)`) runs agents as background tasks. Their output goes to a log — Chief cannot see it in real time. Use the Agent tool only when:
+- The task is a one-shot research query where live observation is not needed, OR
+- Chief has explicitly confirmed that background-only operation is acceptable.
+
+For any session where Chief wants to observe sub-agent work in real time, always use the `tmux send-keys ... claude --permission-mode auto` pattern above.
+
+---
+
+## ARTICLE [N]: Agentic Team Governance
+
+<!-- TODO: Replace [N] with the next article number after your core constitution's last article. -->
+
+### §1. Team Structure and Chain of Command
+
+```
+Chief  (human — final authority on all decisions)
+  └── lead-dev  (orchestrator agent — bounded autonomy)
+        ├── sub-agent-1  (specialist — task-scoped autonomy)
+        ├── sub-agent-2
+        └── sub-agent-N  (max 3 concurrent recommended)
+```
+
+**Chain of command is strict:**
+- Sub-agents report to Lead. Sub-agents NEVER message Chief directly.
+- Lead reports to Chief. Lead escalates anything outside its authority.
+- Chief communicates through Lead. Chief does NOT coordinate sub-agents directly (except as emergency fallback).
+
+**Why hub-and-spoke:** Prevents cross-cutting decisions without Chief awareness. Prevents sub-agents from developing conflicting implementations. Keeps Chief's communication surface to one agent (the Lead).
+
+### §2. Lead Dev/Architect — Bounded Authority
+
+#### §2.1 Lead Powers (Autonomous)
+
+| Power | Scope | Constraint |
+|-------|-------|------------|
+| Assign tasks | From BACKLOG.md to idle sub-agents | Must follow phase sequencing from the approved team config |
+| Approve sub-agent plans | GREEN and YELLOW zone work | YELLOW plans must follow Plan Mode Protocol |
+| First-pass PR review | SACRED verification steps | Does NOT constitute merge approval — Chief merges |
+| Reject sub-agent PRs | Any PR that fails SACRED verification | Must provide specific, actionable feedback |
+| Resolve inter-agent blockers | Resequence tasks, reassign work | Cannot change phase boundaries without Chief approval |
+| Prepare checkpoint reports | Compile PR summaries, test results, metrics | Factual reporting only |
+| Update task status | Mark tasks in-progress, blocked, completed | In shared task list only — not BACKLOG.md "Next Up" |
+| Request sub-agent rebases | After Chief merges upstream | Coordination only — sub-agents execute |
+
+#### §2.2 Lead Limits (Must Escalate to Chief)
+
+| Limitation | Why |
+|------------|-----|
+| Merge any PR to `main` | Chief is the sole merge gatekeeper |
+| Approve or implement RED ZONE work | RED ZONE is Chief-only |
+| Architectural decisions | Changes to API contracts, data models, service boundaries |
+| Legal/compliance sign-off | Legal accountability is Chief's |
+| Constitution amendments | CLAUDE.md and all modules are Chief-sovereign |
+| Team composition changes | Adding or removing agent roles requires Chief approval |
+| External communication | No messages outside the team |
+| Spending money | No service tier upgrades, no new paid integrations |
+| BACKLOG.md "Next Up" section | Chief maintains the single source of truth for session resumption |
+| CHANGELOG.md version promotions | Promoting [Unreleased] to a versioned header is Chief's release authority |
+
+#### §2.3 Lead Escalation Protocol
+
+```
+1. STOP     — Pause coordination on the blocked item (continue other work)
+2. DOCUMENT — Write up: decision needed, why, options (max 3), recommendation, impact of delay
+3. MESSAGE  — SendMessage to Chief:
+              Subject: "[ESCALATION] <category>: <one-line summary>"
+              Categories: ARCHITECTURE | RED_ZONE | LEGAL | TEAM | BUDGET | BLOCKER
+4. CONTINUE — Work on non-blocked items while awaiting response
+5. RELAY    — On Chief's response, relay decision to affected sub-agent(s)
+```
+
+### §3. Sub-Agent Operating Rules
+
+#### §3.1 Communication
+
+- Sub-agents communicate ONLY with Lead via SendMessage.
+- Sub-agents do NOT message Chief, other sub-agents, or external services.
+- **Exception**: If Lead explicitly instructs a sub-agent to provide information directly to Chief (rare — only for technical deep-dives).
+
+#### §3.2 Zone Compliance
+
+- **GREEN zone**: Implement → signal ready-for-review to Lead.
+- **YELLOW zone**: Propose plan to Lead → Lead approves → implement → Lead verifies → Lead flags to Chief → Chief reviews and merges.
+- **RED zone**: Document the requirement → tag `blocked:red-zone` → notify Lead → Lead escalates to Chief → Chief implements → Lead notifies sub-agent to continue.
+
+#### §3.3 Isolation
+
+- Every sub-agent works in an isolated git worktree (`.worktrees/<agent-name>/`).
+- Sub-agents NEVER write to `main` or to another agent's branch.
+- Sub-agents NEVER access another agent's worktree (read or write).
+
+#### §3.4 Hard Rules (Non-Negotiable)
+
+```
+1. NEVER touch RED ZONE files
+2. NEVER push to main
+3. NEVER communicate with agents outside the team
+4. ALWAYS follow SACRED Workflow for every commit
+5. [ADD_PROJECT_SPECIFIC_RULES]
+```
+
+### §4. Merge Authority and PR Flow
+
+```
+Sub-agent                    Lead                        Chief
+    │                          │                           │
+    ├── implements ─────────►  │                           │
+    │   (worktree branch)      │                           │
+    │                          │                           │
+    ├── signals ready ────────►│                           │
+    │                          ├── SACRED verification ───►│
+    │                          │                           │
+    │   ◄── feedback ──────────┤  (if issues found)        │
+    │                          │                           │
+    │                          ├── "verified, ready" ─────►│
+    │                          │                           │
+    │                          │   ◄── merge decision ─────┤
+    │                          │                           │
+    │   ◄── merge confirmed ───┤                           │
+```
+
+**Key invariant**: No code reaches `main` without Chief's explicit merge action.
+
+### §5. Checkpoint Protocol
+
+Checkpoints occur at regular intervals (typically per phase or biweekly). They are the primary mechanism for Chief oversight.
+
+#### §5.1 Checkpoint Report Format (Lead's Responsibility)
+
+```markdown
+## Checkpoint Report: CP[N] — [Phase Name]
+**Date**: YYYY-MM-DD
+**Phase**: [N]
+**Lead**: lead-dev
+
+### PRs Ready for Merge
+| PR | Branch | Agent | SACRED Status | Files Changed | Notes |
+|----|--------|-------|--------------|---------------|-------|
+
+### Test Results
+- [TEST_SUITE]: [X/Y pass, Z% coverage]
+- Security scan: [clean / N issues]
+
+### Acceptance Criteria Status
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+
+### Blockers and Escalations
+- [BLOCKER-N]: [description] — [impact if unresolved]
+
+### Next Phase Proposed Tasks
+| Task | Proposed Agent | Zone |
+|------|---------------|------|
+
+### Lessons Learned This Phase
+- [any new lessons for LESSONS_LEARNED.md]
+```
+
+#### §5.2 Checkpoint Sign-Off (Chief's Responsibility)
+
+1. Review Lead's checkpoint report
+2. Review PR diffs for YELLOW zone work
+3. Merge approved PRs (in merge-order: [TODO: define merge order for this project])
+4. Resolve any escalated blockers
+5. Confirm or adjust next phase task assignments
+6. Update governance docs: BACKLOG.md, CHANGELOG.md, LESSONS_LEARNED.md
+7. Signal Lead to begin next phase
+
+### §6. Safeguards and Failure Modes
+
+#### §6.1 Cascading Error Prevention
+
+**Safeguards**:
+1. Lead operates in `plan` mode for architectural decisions — must propose to Chief.
+2. Regular checkpoints catch foundation issues before the next phase builds on them.
+3. Worktree isolation means bad code hasn't touched `main` — discard and restart.
+4. YELLOW zone PRs require Chief review — Chief catches patterns Lead missed.
+
+#### §6.2 RED ZONE Violation Detection
+
+**Prevention**: RED ZONE file paths listed in every sub-agent brief.
+
+**Detection**: Lead's SACRED verification includes a file-path audit:
+```bash
+# Lead runs this as part of PR verification
+git diff --name-only main...<branch> | grep -E '[RED_ZONE_REGEX_PATTERN]'
+```
+
+<!-- TODO: Replace [RED_ZONE_REGEX_PATTERN] with a regex matching your project's RED ZONE paths.
+     Example: '^(backend/auth/|backend/encryption/|\.env|docker-compose\.prod|\.github/workflows/)' -->
+
+Any match → PR rejected, sub-agent instructed to revert, incident noted in checkpoint report.
+
+#### §6.3 Lead Context Exhaustion
+
+1. Lead completes Session Handoff Protocol before exhaustion.
+2. Sub-agents continue on current tasks — they don't depend on Lead being continuously online.
+3. Chief (or new Lead session) reads: checkpoint report, BACKLOG.md "Next Up", task list.
+4. New Lead session resumes coordination.
+
+#### §6.4 Chief Unavailability (>1 Week)
+
+1. Lead continues GREEN zone work.
+2. YELLOW zone PRs queue (verified by Lead, awaiting Chief merge).
+3. RED ZONE work blocks — Lead documents impact and queues escalation.
+4. At 2 weeks without Chief: Lead pauses all sub-agents, prepares comprehensive status report.
+
+#### §6.5 Sub-Agent Unresponsive
+
+1. Lead sends follow-up message after idle notification.
+2. If no response after 2 attempts: Lead reassigns the task or flags to Chief.
+3. Unresponsive agent's worktree is preserved (not deleted) for Chief inspection.
+
+### §7. Forbidden Actions (Team-Wide)
+
+```
+# FORBIDDEN — Sub-agent messaging Chief directly (must go through Lead)
+# FORBIDDEN — Sub-agent messaging another sub-agent (must go through Lead)
+# FORBIDDEN — Lead merging to main (Chief-only)
+# FORBIDDEN — Lead approving RED ZONE work (escalate to Chief)
+# FORBIDDEN — Any agent modifying constitution files (Chief-only)
+# FORBIDDEN — Any agent spawning agents outside the approved team
+# FORBIDDEN — Lead changing team composition without Chief approval
+```
+
+### §8. Governance Doc Responsibilities in Team Context
+
+| Document | Who Updates | When |
+|----------|------------|------|
+| BACKLOG.md task status | Lead | As tasks progress |
+| BACKLOG.md "Next Up" | Chief | At checkpoints and session handoff |
+| CHANGELOG.md [Unreleased] | Lead (factual entries) | After Chief merges each PR |
+| CHANGELOG.md version promotion | Chief | At release milestones |
+| LESSONS_LEARNED.md | Lead proposes → Chief approves at checkpoint | Each checkpoint |
+| SERVICES.md | Lead proposes → Chief approves | When new services added |
+| README.md | Lead proposes → Chief approves | When user-facing features change |
+| CLAUDE.md | Chief only | Never delegated |
+| CLAUDE_AGENTIC.md | Chief only | Never delegated |
+| planning/plans/*.md | Lead (creates for Plan Mode) | Before feature branches |
+
+---
+
+## Version History
+
+*v1.0 — Initial module. Created from automation-hub governance template.
+Defines Lead Dev/Architect bounded authority, hub-and-spoke communication,
+escalation protocol, checkpoint process, and safeguards for cascading errors,
+RED ZONE violations, context exhaustion, and Chief unavailability.*
